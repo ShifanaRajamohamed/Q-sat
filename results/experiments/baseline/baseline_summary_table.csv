@@ -1,0 +1,9 @@
+Metric,Value
+Mean Secret Key Rate (kbps),0.397
+Peak Secret Key Rate (kbps),0.643
+Mean QBER (%),3.85
+Max QBER (%),6.7
+Mean Channel Loss (dB),32.91
+Min Channel Loss (dB),31.13
+Communication Success Rate (%),100.0
+Fixed Transmission Power (%),70.0

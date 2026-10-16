@@ -1,0 +1,137 @@
+# ==============================================================================
+# Q-SAT Adaptive Ground Station - Git Ignore Configuration
+# ==============================================================================
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.pyd
+*.pyo
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+
+# Environment variables & secrets (keep .env.example tracked)
+.env
+.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+!.env.example
+*.pem
+*.key
+*.pfx
+*.p12
+
+# Database & local storage
+*.sqlite3
+*.db
+*.sqlite
+
+# Testing and coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+.hypothesis/
+
+# Model checkpoints and heavy weights
+# Keep trained baseline PPO policy model bundled for replication
+models/*.pt
+models/*.pth
+models/*.onnx
+models/*.h5
+models/*.tflite
+models/*.bin
+!models/ppo_qsat.zip
+!models/.gitkeep
+
+# Data & raw experiment recordings
+data/raw/*
+data/processed/*
+!data/.gitkeep
+
+# Simulation cache
+!simulation/generated_data/*.csv
+!simulation/generated_data/.gitkeep
+!experiments/results/*.csv
+!experiments/results/*.json
+!experiments/results/.gitkeep
+
+# Frontend (Angular 22 / Node)
+node_modules/
+**/node_modules/
+.angular/
+**/.angular/
+frontend/qsat-dashboard/dist/
+frontend/qsat-dashboard/.angular/
+frontend/qsat-dashboard/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Hardware / Embedded (ESP32 DevKit)
+hardware/esp32/**/build/
+hardware/esp32/**/*.bin
+hardware/esp32/**/*.elf
+hardware/esp32/**/*.hex
+.pio/
+.pioenvs/
+.piolibdeps/
+
+# Logs
+*.log
+logs/
+
+# IDE & Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*.sublime-workspace
+*.sublime-project
+*.sublime-workspace
+
+# Operating System files
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+[Dd]esktop.ini
+
+# Git for Windows portable dump (if placed in repo root)
+git/

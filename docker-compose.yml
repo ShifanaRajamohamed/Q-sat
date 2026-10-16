@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  # Optional Eclipse Mosquitto MQTT Broker for Hardware-in-the-Loop
+  mqtt-broker:
+    image: eclipse-mosquitto:2.0
+    container_name: qsat-mosquitto
+    restart: unless-stopped
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    environment:
+      - TZ=UTC
+
+  # Q-SAT FastAPI Backend Service
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: qsat-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT_MODE=simulation
+      - MQTT_BROKER=mqtt-broker
+      - MQTT_PORT=1883
+    depends_on:
+      - mqtt-broker

@@ -1,0 +1,6 @@
+Variant,Total Secret Key (kbits),Mean SKR (kbps),Mean QBER (%),Total Energy (Joules),Energy Efficiency (kbits/J),Uptime (%)
+Full Multi-Agent,96.05,0.3191,5.09,82.35,1.166,80.4
+w/o Weather Agent,96.05,0.3191,5.09,83.02,1.157,80.4
+w/o Security Agent,104.19,0.3461,4.71,82.35,1.265,80.4
+w/o Comm Agent,41.74,0.1387,4.66,50.17,0.832,49.8
+Static Baseline,44.26,0.147,5.47,50.17,0.882,63.1

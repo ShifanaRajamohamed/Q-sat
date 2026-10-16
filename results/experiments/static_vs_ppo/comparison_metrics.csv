@@ -1,0 +1,7 @@
+Metric,Static Baseline,PPO Controller,Relative Improvement (%)
+Total Secret Bits Delivered (kbits),10.05,0.0,-100.0
+Mean Secret Key Rate (kbps),0.0334,0.0,-100.0
+Mean QBER (%),16.95,47.01,-177.26
+Total Energy Consumed (Joules),50.17,11.65,76.77
+Energy Efficiency (kbits / Joule),0.2,0.0,-100.0
+Link Availability / Distillable (%),41.5,0.0,-41.53

@@ -1,0 +1,5 @@
+Controller,Total Key (kbits) Mean,Total Key Std,Total Key 95% CI,Energy (J) Mean,Energy Std,Efficiency (kb/J) Mean,Mean QBER (%),QBER Std,Uptime (%) Mean,Uptime Std
+MULTI_AGENT,54.19,1.47,0.91,67.96,0.21,0.797,4.94,0.12,74.5,2.0
+PPO,0.0,0.0,0.0,10.73,0.03,0.0,45.28,0.13,0.0,0.0
+RULE_BASED,7.21,8.43,5.22,80.2,0.0,0.09,6.75,0.87,21.8,17.1
+STATIC,10.67,0.58,0.36,40.17,0.0,0.266,6.68,0.13,46.6,1.2

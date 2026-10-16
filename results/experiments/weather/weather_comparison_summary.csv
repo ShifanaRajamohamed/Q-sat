@@ -1,0 +1,4 @@
+scenario,data_source,description,mean_skr_kbps,peak_skr_kbps,mean_qber_pct,max_qber_pct,mean_channel_loss_db,mean_power_pct,success_rate_pct
+CLEAR,SIMULATED ENVIRONMENT,Clear Sky (Calm Boundary Layer),0.438,0.676,3.68,6.69,32.63,70.0,100.0
+MODERATE,SIMULATED ENVIRONMENT,Moderate Weather (High Humidity & Aerosol Haze),0.016,0.049,10.89,21.59,38.45,70.0,55.0
+SEVERE,SIMULATED ENVIRONMENT,Severe Weather (Overcast Stratus Cloud & Rain Extinction),0.0,0.0,50.0,50.0,53.6,70.0,0.0

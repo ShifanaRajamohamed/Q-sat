@@ -1,0 +1,22 @@
+injected_anomaly_pct,observed_total_qber_pct,modeled_physical_qber_pct,unexplained_error_pct,anomaly_probability,classification,secret_key_rate_kbps,primary_error_driver
+0.0,4.79,4.8,0.0,0.02,NORMAL,0.2054,Detector Dark Counts
+0.5,5.29,4.8,0.49,0.02,NORMAL,0.1819,Detector Dark Counts
+1.0,5.79,4.8,0.99,0.02,DEGRADED,0.1593,Detector Dark Counts
+1.5,6.29,4.8,1.49,0.03,DEGRADED,0.1374,Detector Dark Counts
+2.0,6.79,4.8,1.99,0.04,DEGRADED,0.1161,Detector Dark Counts
+2.5,7.29,4.8,2.49,0.699,ANOMALY,0.0955,Unexplained Excess QBER
+3.0,7.79,4.8,2.99,0.739,ANOMALY,0.0755,Unexplained Excess QBER
+3.5,8.29,4.8,3.49,0.779,ANOMALY,0.0561,Unexplained Excess QBER
+4.0,8.79,4.8,3.99,0.819,ANOMALY,0.0371,Unexplained Excess QBER
+4.5,9.29,4.8,4.49,0.859,ANOMALY,0.0187,Unexplained Excess QBER
+5.0,9.79,4.8,4.99,0.899,ANOMALY,0.0007,Unexplained Excess QBER
+5.5,10.29,4.8,5.49,0.939,ANOMALY,0.0,Unexplained Excess QBER
+6.0,10.79,4.8,5.99,0.979,ANOMALY,0.0,Unexplained Excess QBER
+6.5,11.29,4.8,6.49,0.98,ANOMALY,0.0,Unexplained Excess QBER
+7.0,11.79,4.8,6.99,0.98,ANOMALY,0.0,Unexplained Excess QBER
+7.5,12.29,4.8,7.49,0.98,ANOMALY,0.0,Unexplained Excess QBER
+8.0,12.79,4.8,7.99,0.98,ANOMALY,0.0,Unexplained Excess QBER
+8.5,13.29,4.8,8.49,0.98,ANOMALY,0.0,Unexplained Excess QBER
+9.0,13.79,4.8,8.99,0.98,ANOMALY,0.0,Unexplained Excess QBER
+9.5,14.29,4.8,9.49,0.98,ANOMALY,0.0,Unexplained Excess QBER
+10.0,14.79,4.8,9.99,0.98,ANOMALY,0.0,Unexplained Excess QBER

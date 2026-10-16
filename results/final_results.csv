@@ -1,0 +1,5 @@
+Controller,Architecture,Total Secret Key (kbits),Key Std Dev (kbits),Mean SKR (kbps),Mean QBER (%),Total Energy (Joules),Energy Efficiency (kbits/J),Distillation Uptime (%),Security Anomaly Detection,Atmospheric Adaptation
+MULTI_AGENT,Hierarchical Multi-Agent (Weather + Comm + Security + Coordinator),54.2,1.5,0.284,4.76,68.0,0.797,74.5,Yes (Multi-Factor Attribution),Continuous Multi-Threshold Arbitration
+STATIC,"Fixed Laser Actuation (50% Power, 0.70 Rate, 0.25 Div)",10.7,0.6,0.061,6.58,40.2,0.266,46.6,No (Open Loop),None (Static Open Loop)
+RULE_BASED,Deterministic Multi-Threshold State Machine,7.2,8.4,0.114,5.36,80.2,0.09,21.8,No,Threshold Step Adjustments
+PPO,Deep Reinforcement Learning (Proximal Policy Optimization),0.0,0.0,0.0,45.62,10.7,0.0,0.0,Implicit via Reward Penalty,Continuous Neural Policy

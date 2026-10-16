@@ -1,0 +1,5 @@
+Controller,Total Secret Key (kbits),Mean SKR (kbps),Peak SKR (kbps),Mean Operational QBER (%),Total Energy (Joules),Energy Efficiency (kbits/J),Distillation Uptime (%)
+STATIC,0.09,0.0007,0.0444,9.12,20.17,0.004,5.8
+RULE_BASED,0.47,0.0039,0.1101,7.88,40.2,0.012,9.1
+PPO,0.0,0.0,0.0,39.1,8.8,0.0,0.0
+MULTI_AGENT,5.55,0.0459,0.3071,7.39,37.22,0.149,60.3

@@ -1,0 +1,10 @@
+{
+    "algorithm": "PPO",
+    "total_timesteps": 2048,
+    "seed": 42,
+    "training_duration_s": 2.62,
+    "mean_eval_reward": -3000.0,
+    "std_eval_reward": 0.0,
+    "model_file": "models\\ppo_qsat.zip",
+    "device": "cpu"
+}

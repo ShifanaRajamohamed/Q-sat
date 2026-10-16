@@ -1,0 +1,2 @@
+Total Timesteps,Total Episodes,Initial Mean Reward (First 5),Final Mean Reward (Last 5),Peak Episode Reward,Training Duration (s)
+12000,40,-2584.85,-1329.51,-73.69,17.2
