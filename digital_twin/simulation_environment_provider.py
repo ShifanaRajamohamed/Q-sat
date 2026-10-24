@@ -18,10 +18,13 @@ from simulation.scenarios.scenario_definitions import SCENARIO_CATALOG, Scenario
 class SimulationEnvironmentProvider(EnvironmentProvider):
     """Generates synthetic environmental telemetry with physically plausible stochastic dynamics."""
 
-    def __init__(self, scenario: ScenarioType = ScenarioType.CLEAR_SKY, seed: Optional[int] = None):
+    def __init__(self, scenario: ScenarioType = ScenarioType.CLEAR_SKY, seed: Optional[int] = None, use_dataset: bool = True):
         self.scenario = scenario
         self.seed = seed if seed is not None else settings.RANDOM_SEED
         self.rng = np.random.RandomState(self.seed)
+        self.use_dataset = use_dataset
+        self.dataset_df: Optional[pd.DataFrame] = None
+        self.dataset_idx: int = 0
 
         self.current_time = 0.0
         self.params: ScenarioParams = SCENARIO_CATALOG[self.scenario]
@@ -36,6 +39,24 @@ class SimulationEnvironmentProvider(EnvironmentProvider):
 
         self.reset(seed=self.seed)
 
+    def _try_load_dataset(self) -> Optional[pd.DataFrame]:
+        """Attempt to load pre-generated empirical dataset from simulation/generated_data/."""
+        if not self.use_dataset:
+            return None
+        from pathlib import Path
+        root = Path(__file__).resolve().parent.parent
+        # Only load pre-generated dataset if it specifically matches this seed
+        csv_file = root / "simulation" / "generated_data" / f"{self.scenario.value.lower()}_seed{self.seed}.csv"
+        if csv_file.exists():
+            try:
+                df = pd.read_csv(csv_file)
+                required = ["temperature", "humidity", "ambient_light", "vibration", "cloud_factor", "turbulence"]
+                if all(c in df.columns for c in required) and len(df) > 0:
+                    return df
+            except Exception:
+                pass
+        return None
+
     def reset(self, seed: Optional[int] = None) -> EnvironmentData:
         """Reset the stochastic generator and reinitialize state around scenario baseline."""
         if seed is not None:
@@ -43,32 +64,43 @@ class SimulationEnvironmentProvider(EnvironmentProvider):
         self.rng = np.random.RandomState(self.seed)
         self.params = SCENARIO_CATALOG[self.scenario]
         self.current_time = 0.0
+        self.dataset_df = self._try_load_dataset()
+        self.dataset_idx = 0
 
-        # Initialize with slight initial stochastic perturbation
-        self.temperature = float(np.clip(
-            self.params.temp_mean + self.rng.normal(0, self.params.temp_sigma * 0.5),
-            self.params.temp_min, self.params.temp_max
-        ))
-        self.humidity = float(np.clip(
-            self.params.humidity_mean + self.rng.normal(0, self.params.humidity_sigma * 0.5),
-            self.params.humidity_min, self.params.humidity_max
-        ))
-        self.ambient_light = float(np.clip(
-            self.params.ambient_light_mean + self.rng.normal(0, self.params.ambient_light_sigma * 0.5),
-            self.params.ambient_light_min, self.params.ambient_light_max
-        ))
-        self.vibration = float(np.clip(
-            self.params.vibration_mean + self.rng.normal(0, self.params.vibration_sigma * 0.5),
-            self.params.vibration_min, self.params.vibration_max
-        ))
-        self.cloud_factor = float(np.clip(
-            self.params.cloud_mean + self.rng.normal(0, self.params.cloud_sigma * 0.5),
-            self.params.cloud_min, self.params.cloud_max
-        ))
-        self.turbulence = float(np.clip(
-            self.params.turbulence_mean + self.rng.normal(0, self.params.turbulence_sigma * 0.5),
-            self.params.turbulence_min, self.params.turbulence_max
-        ))
+        if self.dataset_df is not None and not self.dataset_df.empty:
+            row = self.dataset_df.iloc[0]
+            self.temperature = float(row["temperature"])
+            self.humidity = float(row["humidity"])
+            self.ambient_light = float(row["ambient_light"])
+            self.vibration = float(row["vibration"])
+            self.cloud_factor = float(row["cloud_factor"])
+            self.turbulence = float(row["turbulence"])
+        else:
+            # Initialize with slight initial stochastic perturbation
+            self.temperature = float(np.clip(
+                self.params.temp_mean + self.rng.normal(0, self.params.temp_sigma * 0.5),
+                self.params.temp_min, self.params.temp_max
+            ))
+            self.humidity = float(np.clip(
+                self.params.humidity_mean + self.rng.normal(0, self.params.humidity_sigma * 0.5),
+                self.params.humidity_min, self.params.humidity_max
+            ))
+            self.ambient_light = float(np.clip(
+                self.params.ambient_light_mean + self.rng.normal(0, self.params.ambient_light_sigma * 0.5),
+                self.params.ambient_light_min, self.params.ambient_light_max
+            ))
+            self.vibration = float(np.clip(
+                self.params.vibration_mean + self.rng.normal(0, self.params.vibration_sigma * 0.5),
+                self.params.vibration_min, self.params.vibration_max
+            ))
+            self.cloud_factor = float(np.clip(
+                self.params.cloud_mean + self.rng.normal(0, self.params.cloud_sigma * 0.5),
+                self.params.cloud_min, self.params.cloud_max
+            ))
+            self.turbulence = float(np.clip(
+                self.params.turbulence_mean + self.rng.normal(0, self.params.turbulence_sigma * 0.5),
+                self.params.turbulence_min, self.params.turbulence_max
+            ))
 
         return self.get_current_environment()
 
@@ -81,13 +113,24 @@ class SimulationEnvironmentProvider(EnvironmentProvider):
         if reseed is not None:
             self.seed = reseed
             self.rng = np.random.RandomState(self.seed)
+        self.dataset_df = self._try_load_dataset()
+        self.dataset_idx = 0
 
     def step(self, dt: float = 1.0) -> EnvironmentData:
-        """Advance environmental physics by dt seconds using Ornstein-Uhlenbeck integration.
+        """Advance environmental physics by dt seconds using empirical dataset replay or OU SDE."""
+        if self.dataset_df is not None and not self.dataset_df.empty:
+            if dt > 0:
+                self.dataset_idx = (self.dataset_idx + 1) % len(self.dataset_df)
+                row = self.dataset_df.iloc[self.dataset_idx]
+                self.temperature = float(row["temperature"])
+                self.humidity = float(row["humidity"])
+                self.ambient_light = float(row["ambient_light"])
+                self.vibration = float(row["vibration"])
+                self.cloud_factor = float(row["cloud_factor"])
+                self.turbulence = float(row["turbulence"])
+                self.current_time += dt
+            return self.get_current_environment()
 
-        Equation:
-            dX = theta * (mu - X) * dt + sigma * sqrt(dt) * Normal(0, 1)
-        """
         p = self.params
         sqrt_dt = np.sqrt(dt)
 

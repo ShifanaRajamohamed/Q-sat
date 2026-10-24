@@ -151,8 +151,17 @@ export class TelemetryService {
     return this.http.get(`${this.apiBase}/api/experiments/summary`);
   }
 
+  public getSimulationDatasets(): Observable<any> {
+    return this.http.get(`${this.apiBase}/api/simulation/datasets`);
+  }
+
+  public getSimulationDataset(scenario: string): Observable<any> {
+    return this.http.get(`${this.apiBase}/api/simulation/dataset/${scenario}`);
+  }
+
   public runDemonstration(): Observable<any> {
     return this.http.post(`${this.apiBase}/api/experiments/run-demo`, {});
   }
 }
+
 

@@ -66,3 +66,71 @@ async def stop_simulation():
     global _simulation_running
     _simulation_running = False
     return {"status": "stopped", "is_running": False}
+
+
+@router.get("/datasets", summary="List all empirical scenario datasets and summary stats")
+async def list_simulation_datasets():
+    """Retrieve catalog of all pre-generated empirical CSV datasets."""
+    from pathlib import Path
+    import pandas as pd
+    root = Path(__file__).resolve().parent.parent.parent.parent
+    data_dir = root / "simulation" / "generated_data"
+    catalog = []
+    if data_dir.exists():
+        for csv_file in sorted(data_dir.glob("*.csv")):
+            try:
+                df = pd.read_csv(csv_file)
+                stats = {}
+                numeric_cols = ["temperature", "humidity", "ambient_light", "vibration", "cloud_factor", "turbulence"]
+                for col in numeric_cols:
+                    if col in df.columns:
+                        stats[col] = {
+                            "mean": round(float(df[col].mean()), 3),
+                            "std": round(float(df[col].std()), 3),
+                            "min": round(float(df[col].min()), 3),
+                            "max": round(float(df[col].max()), 3),
+                        }
+                scenario_name = csv_file.stem.split("_seed")[0].upper()
+                catalog.append({
+                    "filename": csv_file.name,
+                    "scenario": scenario_name,
+                    "row_count": len(df),
+                    "summary": stats,
+                    "sample_rows": df.head(5).to_dict(orient="records")
+                })
+            except Exception:
+                continue
+    return {
+        "status": "success",
+        "provenance": "100% SOFTWARE DIGITAL TWIN & DATASET",
+        "total_datasets": len(catalog),
+        "datasets": catalog
+    }
+
+
+@router.get("/dataset/{scenario}", summary="Get full rows of a specific scenario dataset")
+async def get_simulation_dataset(scenario: str):
+    """Retrieve all empirical time-series samples for a given scenario dataset."""
+    from pathlib import Path
+    import pandas as pd
+    root = Path(__file__).resolve().parent.parent.parent.parent
+    data_dir = root / "simulation" / "generated_data"
+    filename = f"{scenario.lower()}_seed42.csv"
+    csv_file = data_dir / filename
+    if not csv_file.exists():
+        # Try matching any seed file for this scenario
+        matches = list(data_dir.glob(f"{scenario.lower()}_seed*.csv"))
+        if matches:
+            csv_file = matches[0]
+        else:
+            return {"status": "error", "message": f"Dataset for scenario {scenario} not found"}
+
+    df = pd.read_csv(csv_file)
+    return {
+        "status": "success",
+        "scenario": scenario.upper(),
+        "filename": csv_file.name,
+        "total_samples": len(df),
+        "records": df.to_dict(orient="records")
+    }
+
