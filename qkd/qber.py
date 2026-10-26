@@ -25,17 +25,17 @@ def calculate_qber(
     bg_noise = max(0.0, channel_state.background_noise_rate)
     dark_noise = settings.DARK_COUNT_RATE * 50e6  # Absolute dark count rate
 
-    # If no signal is received (e.g. satellite below horizon or complete cloud blockage),
-    # the detector sees pure noise, yielding theoretical 50% random error
+    # If no signal is received (e.g. satellite below horizon or transmitter idle),
+    # ground station is in standby mode: error attribution is 0.0
     if rx_signal <= 1e-3 or channel_state.transmittance <= 1e-9:
         return QBERDecomposition(
-            base_error=settings.BASE_QBER,
-            atmospheric_noise=0.10,
-            background_light_noise=0.15,
-            pointing_error=0.10,
-            detector_noise=0.14,
-            security_anomaly_component=anomaly_component,
-            total_qber=0.50
+            base_error=0.0,
+            atmospheric_noise=0.0,
+            background_light_noise=0.0,
+            pointing_error=0.0,
+            detector_noise=0.0,
+            security_anomaly_component=0.0,
+            total_qber=0.0
         )
 
     # 1. Base optical error (imperfect polarization beam splitters, waveplate retardance error)

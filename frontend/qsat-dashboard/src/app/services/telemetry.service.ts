@@ -124,7 +124,7 @@ export class TelemetryService {
 
   // REST API Actions
   public switchController(mode: string): Observable<any> {
-    return this.http.post(`${this.apiBase}/api/control/switch`, { mode });
+    return this.http.post(`${this.apiBase}/api/control/switch`, { mode, controller_type: mode });
   }
 
   public switchScenario(scenario: string): Observable<any> {
@@ -134,6 +134,7 @@ export class TelemetryService {
   public injectAnomaly(magnitude: number = 0.06, anomalyType: string = 'EAVESDROPPING'): Observable<any> {
     return this.http.post(`${this.apiBase}/api/qkd/inject-anomaly`, {
       magnitude,
+      qber_offset: magnitude,
       anomaly_type: anomalyType,
       duration_steps: 30
     });

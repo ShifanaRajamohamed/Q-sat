@@ -1,18 +1,17 @@
 <div class="app-container">
   <!-- Top Navigation & Global Controls -->
   <header class="top-nav">
-    <!-- Top Row: Brand & System Status & Major Actions -->
     <div class="nav-primary-bar">
       <div class="brand-section">
         <div class="logo-badge">Q</div>
         <div class="brand-titles">
           <h1>
-            Q-SAT // QUANTUM GROUND MISSION CONTROL
-            <span class="badge" [ngClass]="telemetry?.qkd?.status_label === 'SECURE' ? 'badge-green' : telemetry?.qkd?.status_label === 'DEGRADED' ? 'badge-amber' : 'badge-red'">
-              {{ telemetry?.qkd?.status_label === 'SECURE' ? '● SECURE (KEY SIFTING)' : telemetry?.qkd?.status_label === 'DEGRADED' ? '● DEGRADED CHANNEL' : '● QBER THRESHOLD ABORT' }}
+            Q-SAT Mission Control
+            <span class="badge" [ngClass]="qkdStatusClass">
+              {{ qkdStatusText }}
             </span>
           </h1>
-          <div class="subtitle">Alice (LEO Satellite 500km) &harr; Bob (OGS Trichy, India) &bull; BB84 Quantum Key Distribution Platform</div>
+          <div class="subtitle">Alice (LEO 500km) to Bob (OGS Trichy) &bull; BB84 Quantum Channel</div>
         </div>
       </div>
 
@@ -24,95 +23,29 @@
       </div>
 
       <div class="nav-actions-cluster">
-        <!-- 100% Software Mode Badge -->
         <div class="badge badge-purple provenance-badge">
-          💻 100% SOFTWARE DIGITAL TWIN
+          DIGITAL TWIN
         </div>
 
-        <!-- Connection Status Indicator -->
         <div class="control-group connection-group">
           <span class="dot" [ngClass]="{'dot-green': connectionStatus === 'CONNECTED', 'dot-red': connectionStatus === 'DISCONNECTED', 'dot-amber': connectionStatus === 'CONNECTING'}"></span>
           <span class="mono conn-label">{{ connectionStatus }}</span>
         </div>
 
-        <!-- Toggle Mission Briefing -->
-        <button class="btn btn-briefing" (click)="toggleMissionBriefing()" title="Toggle Mission Objective & Demonstration Explainer">
-          ❓ {{ showMissionBriefing ? 'Hide Briefing' : 'Mission Briefing' }}
+        <button class="btn btn-demo" (click)="onRunFullDemonstration()" [disabled]="isRunningDemo" title="Execute 4-controller evaluation">
+          <span *ngIf="isRunningDemo">Running Demo...</span>
+          <span *ngIf="!isRunningDemo">RUN DEMO</span>
         </button>
 
-        <!-- Major Action: RUN FULL DEMONSTRATION -->
-        <button class="btn btn-demo" (click)="onRunFullDemonstration()" [disabled]="isRunningDemo" title="Execute full 4-controller turbulent pass evaluation">
-          <span *ngIf="isRunningDemo">⏳ Running Demo...</span>
-          <span *ngIf="!isRunningDemo">⚡ RUN FULL DEMO</span>
+        <button class="btn btn-purple" (click)="toggleResultsModal()" title="View research data and benchmark outputs">
+          Results
         </button>
 
-        <!-- Major Action: Scientific Results & Empirical Datasets Modal -->
-        <button class="btn btn-purple" (click)="toggleResultsModal()" title="View empirical research tables and 20 experiment outputs">
-          📊 Scientific Results
+        <!-- Dynamic Dark/Light Theme Mode Switcher -->
+        <button class="btn btn-theme-toggle" (click)="toggleTheme()" [title]="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'" id="theme-toggle-btn">
+          <span class="theme-icon">{{ isDarkMode ? '☀️' : '🌙' }}</span>
+          <span class="theme-label">{{ isDarkMode ? 'Light' : 'Dark' }}</span>
         </button>
-      </div>
-    </div>
-
-    <!-- Collapsible Mission Briefing & Demonstration Explainer -->
-    <div class="mission-briefing-panel" *ngIf="showMissionBriefing">
-      <div class="briefing-header">
-        <div class="briefing-title">
-          <span>🎯</span> MISSION DEMONSTRATION &amp; RESEARCH OBJECTIVE
-        </div>
-        <button class="btn-close-sm" (click)="toggleMissionBriefing()" title="Dismiss briefing">✕</button>
-      </div>
-
-      <div class="briefing-grid">
-        <div class="briefing-card">
-          <div class="b-icon">🛰️</div>
-          <div class="b-content">
-            <strong>1. Quantum Transmitter (Alice)</strong>
-            <p>LEO satellite at 500 km altitude transmits polarized single-photon pulses to ground receiver Bob via the analytical BB84 protocol.</p>
-          </div>
-        </div>
-
-        <div class="briefing-card">
-          <div class="b-icon">⛈️</div>
-          <div class="b-content">
-            <strong>2. Atmospheric Threat &amp; Cutoff</strong>
-            <p>Turbulence, clouds, daylight, and jitter inflate Quantum Bit Error Rate (QBER). If QBER &ge; <strong>11.0%</strong>, transmission immediately aborts!</p>
-          </div>
-        </div>
-
-        <div class="briefing-card">
-          <div class="b-icon">🤖</div>
-          <div class="b-content">
-            <strong>3. Multi-Agent AI Solution</strong>
-            <p>Hierarchical AI agents tune Laser Power, Photon Rate &amp; Divergence in real time, yielding <strong>+406% keys</strong> while catching eavesdroppers.</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Live Executive Scorecard (Easy to Understand at a Glance) -->
-      <div class="executive-scorecard">
-        <div class="score-item highlight-green">
-          <div class="score-lbl">DELIVERED SECRET KEY</div>
-          <div class="score-val">54.2 <span class="score-unit">kbits</span></div>
-          <div class="score-sub">~211 unhackable AES-256 keys generated</div>
-        </div>
-
-        <div class="score-item">
-          <div class="score-lbl">QUANTUM SECURITY STATUS</div>
-          <div class="score-val" style="color: #00ff9d;">100% UNHACKABLE</div>
-          <div class="score-sub">QBER at 4.76% (Safely below 11.0% cutoff)</div>
-        </div>
-
-        <div class="score-item">
-          <div class="score-lbl">AI SUPREMACY OVER STATIC</div>
-          <div class="score-val" style="color: #00f0ff;">+406.5% <span class="score-unit">YIELD</span></div>
-          <div class="score-sub">54.2 kb Multi-Agent vs 10.7 kb Static baseline</div>
-        </div>
-
-        <div class="score-item">
-          <div class="score-lbl">TRANSMITTER POWER EFFICIENCY</div>
-          <div class="score-val" style="color: #f59e0b;">0.797 <span class="score-unit">kb/J</span></div>
-          <div class="score-sub">3x more key bits delivered per Joule consumed</div>
-        </div>
       </div>
     </div>
 
@@ -121,46 +54,51 @@
       <div class="command-group-left">
         <!-- Scenario Selector -->
         <div class="control-group">
-          <span class="control-label">Weather Regime:</span>
+          <span class="control-label">Weather:</span>
           <select class="custom-select" [ngModel]="selectedScenario" (ngModelChange)="onScenarioChange($event)">
-            <option value="CLEAR_SKY">☀️ Clear Sky (Optimal 32 dB)</option>
-            <option value="HUMID">🌫️ Humid (Aerosol Extinction)</option>
-            <option value="CLOUDY">☁️ Heavy Clouds (Cloud Optical Depth)</option>
-            <option value="HIGH_AMBIENT_LIGHT">☀️ Daylight Stray Light (Background Photons)</option>
-            <option value="VIBRATION">〰️ Mount Vibration (Pointing Jitter)</option>
-            <option value="COMBINED_DEGRADATION">⚡ Combined Multi-Stressor Storm</option>
+            <option value="CLEAR_SKY">Clear Sky (Optimal 32 dB)</option>
+            <option value="HUMID">Humid Aerosol</option>
+            <option value="CLOUDY">Heavy Clouds</option>
+            <option value="HIGH_AMBIENT_LIGHT">Daylight Stray Light</option>
+            <option value="VIBRATION">Mount Vibration</option>
+            <option value="COMBINED_DEGRADATION">Combined Storm</option>
           </select>
         </div>
 
         <!-- Controller Mode Switcher -->
         <div class="control-group-inline">
-          <span class="control-label">Controller Mode:</span>
+          <span class="control-label">Controller:</span>
           <div class="btn-toggle-group">
             <button class="btn-toggle" [class.active]="telemetry?.control?.mode === 'MULTI_AGENT'" (click)="onControllerChange('MULTI_AGENT')">
-              🤖 MULTI-AGENT (AI)
+              MULTI-AGENT (AI)
             </button>
             <button class="btn-toggle" [class.active]="telemetry?.control?.mode === 'STATIC'" (click)="onControllerChange('STATIC')">
-              ⚙️ STATIC BASELINE
+              STATIC BASELINE
             </button>
             <button class="btn-toggle" [class.active]="telemetry?.control?.mode === 'RULE_BASED'" (click)="onControllerChange('RULE_BASED')">
-              📐 RULE-BASED
+              RULE-BASED
             </button>
             <button class="btn-toggle" [class.active]="telemetry?.control?.mode === 'PPO'" (click)="onControllerChange('PPO')">
-              🧠 PPO NEURAL
+              PPO NEURAL
             </button>
           </div>
         </div>
       </div>
 
       <div class="command-group-right">
-        <!-- Anomaly Injection Action Button -->
+        <!-- Anomaly Injection Button -->
         <button class="btn btn-sm" [ngClass]="anomalyActive ? 'btn-danger' : 'btn-cyan'" (click)="toggleAnomaly()">
-          {{ anomalyActive ? '🚨 Clear Cyber Attack' : '🕵️ Inject Cyber Attack' }}
+          {{ anomalyActive ? 'Clear Attack' : 'Inject Cyber Attack' }}
+        </button>
+
+        <!-- Fast-Forward to Active Pass -->
+        <button class="btn btn-sm btn-green" (click)="fastForwardPass()" title="Jump Alice directly into active optical tracking window">
+          Acquire Pass
         </button>
 
         <!-- Reset Simulation -->
-        <button class="btn btn-sm" (click)="resetSimulation()" title="Reset Orbit to Ascending Horizon">
-          ↻ Reset Satellite Orbit
+        <button class="btn btn-sm" (click)="resetSimulation()" title="Reset Satellite Orbit">
+          Reset Orbit
         </button>
       </div>
     </div>
@@ -170,15 +108,15 @@
   <main class="dashboard-grid">
     <!-- LEFT COLUMN: Global Tracking & Live Channel Dynamics -->
     <div class="grid-col-wide">
-      <!-- 2D World Orbit Map & Ground Station Footprint (Aerospace Tracking View) -->
+      <!-- 2D World Orbit Map -->
       <section class="glass-panel">
         <div class="panel-header">
           <div class="panel-title">
-            <span class="icon">🌍</span> LEO Satellite Orbit Ground Track &amp; Ground Station Footprint
+            Satellite Ground Track
           </div>
           <div style="display: flex; gap: 8px; align-items: center;">
-            <span class="badge badge-green" *ngIf="telemetry?.satellite?.is_visible">● IN OPTICAL SIGHT</span>
-            <span class="badge badge-amber" *ngIf="!telemetry?.satellite?.is_visible">○ SUB-HORIZON APPROACH</span>
+            <span class="badge badge-green" *ngIf="telemetry?.satellite?.is_visible">IN OPTICAL SIGHT</span>
+            <span class="badge badge-amber" *ngIf="!telemetry?.satellite?.is_visible">SUB-HORIZON</span>
             <span class="badge badge-cyan">ALT: 500 km</span>
           </div>
         </div>
@@ -186,38 +124,100 @@
           <div class="world-map-container">
             <canvas #worldMapCanvas width="540" height="260" class="world-map-canvas"></canvas>
             <div class="map-overlay-stats">
-              <div><strong>Sat Pos:</strong> {{ telemetry?.satellite?.latitude | number:'1.2-2' }}°N, {{ telemetry?.satellite?.longitude | number:'1.2-2' }}°E</div>
+              <div><strong>Sat:</strong> {{ telemetry?.satellite?.latitude | number:'1.2-2' }}°N, {{ telemetry?.satellite?.longitude | number:'1.2-2' }}°E</div>
               <div><strong>OGS Bob:</strong> 10.79°N, 78.70°E (Trichy)</div>
             </div>
-          </div>
-          <div class="map-caption">
-            Equirectangular Projection &bull; Sun-Synchronous Inclination 97.4&deg; &bull;
-            <span style="color: #00ff9d;">Green circle = OGS Bob Visibility Cone (1500 km)</span> &bull;
-            <span style="color: #00f0ff;">Cyan line = Active Quantum Beam</span>
           </div>
         </div>
       </section>
 
-      <!-- Real-Time BB84 Key & QBER Dynamics (ECharts) -->
+      <!-- Real-Time BB84 Key & QBER Dynamics -->
       <section class="glass-panel" style="margin-top: 14px;">
         <div class="panel-header">
           <div class="panel-title">
-            <span class="icon">📈</span> Real-Time BB84 Key Generation &amp; QBER Telemetry
+            BB84 Real-Time Telemetry
           </div>
           <div class="chart-tabs">
-            <button class="tab-btn" [class.active]="activeTab === 'dual'" (click)="setTab('dual')">Combined Dynamics</button>
+            <button class="tab-btn" [class.active]="activeTab === 'dual'" (click)="setTab('dual')">Combined</button>
             <button class="tab-btn" [class.active]="activeTab === 'qber'" (click)="setTab('qber')">QBER (%)</button>
             <button class="tab-btn" [class.active]="activeTab === 'skr'" (click)="setTab('skr')">SKR (kbps)</button>
             <button class="tab-btn" [class.active]="activeTab === 'loss'" (click)="setTab('loss')">Loss (dB)</button>
-            <button class="tab-btn" [class.active]="activeTab === 'actuators'" (click)="setTab('actuators')">AI Actuators</button>
+            <button class="tab-btn" [class.active]="activeTab === 'actuators'" (click)="setTab('actuators')">Actuators</button>
           </div>
         </div>
         <div class="panel-body" style="padding: 8px;">
           <div #chartContainer class="echart-box"></div>
-          <div style="font-size: 10px; color: var(--text-muted); text-align: center; margin-top: 4px;">
-            <strong style="color: #00ff9d;">Green = Secret Key Rate (kbps)</strong> &bull;
-            <strong style="color: #f59e0b;">Amber = QBER (%)</strong> &bull;
-            <strong style="color: #ef4444;">Dashed Red Line = 11.0% BB84 Security Cutoff Limit</strong>
+        </div>
+      </section>
+
+      <!-- Live Mission Telemetry & Event Messages -->
+      <section class="glass-panel" style="margin-top: 14px;">
+        <div class="panel-header">
+          <div class="panel-title">
+            Mission Telemetry Log
+          </div>
+          <div class="log-actions-cluster">
+            <div class="log-filter-tabs">
+              <button class="log-tab-btn" [class.active]="logFilter === 'ALL'" (click)="setLogFilter('ALL')">ALL</button>
+              <button class="log-tab-btn" [class.active]="logFilter === 'SEC'" (click)="setLogFilter('SEC')">SECURITY</button>
+              <button class="log-tab-btn" [class.active]="logFilter === 'AI'" (click)="setLogFilter('AI')">AI AGENTS</button>
+              <button class="log-tab-btn" [class.active]="logFilter === 'QKD'" (click)="setLogFilter('QKD')">QKD</button>
+              <button class="log-tab-btn" [class.active]="logFilter === 'SAT'" (click)="setLogFilter('SAT')">SATELLITE</button>
+            </div>
+            <button class="btn-clear-logs" (click)="clearLogs()" title="Clear stream">Clear</button>
+          </div>
+        </div>
+        <div class="panel-body log-panel-body">
+          <div class="log-stream-container">
+            <div class="log-entry" *ngFor="let log of filteredLogs" [ngClass]="'log-' + log.level.toLowerCase()">
+              <span class="log-time">{{ log.time }}</span>
+              <span class="log-source" [ngClass]="'src-' + log.source.toLowerCase()">[{{ log.source }}]</span>
+              <span class="log-message">{{ log.message }}</span>
+              <span class="log-provenance">{{ log.provenance }}</span>
+            </div>
+            <div class="log-empty" *ngIf="filteredLogs.length === 0">
+              No telemetry messages logged for current filter.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Optical Channel Link Budget -->
+      <section class="glass-panel" style="margin-top: 14px;">
+        <div class="panel-header">
+          <div class="panel-title">
+            Optical Channel Link Budget
+          </div>
+          <span class="badge badge-cyan">850 nm DOWNLINK</span>
+        </div>
+        <div class="panel-body link-budget-body">
+          <div class="budget-grid">
+            <div class="metric-box">
+              <div class="metric-label">Atmospheric Loss</div>
+              <div class="metric-val" style="color: #38bdf8;">{{ (telemetry?.channel?.atmospheric_loss_db || 0) | number:'1.2-2' }}<span class="metric-unit">dB</span></div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-label">FSPL Loss</div>
+              <div class="metric-val" style="color: #a855f7;">{{ (telemetry?.channel?.fspl_loss_db || 0) | number:'1.1-1' }}<span class="metric-unit">dB</span></div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-label">Pointing Jitter</div>
+              <div class="metric-val" style="color: #f59e0b;">{{ (telemetry?.channel?.pointing_loss_db || 0) | number:'1.2-2' }}<span class="metric-unit">dB</span></div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-label">Scintillation</div>
+              <div class="metric-val" style="color: #00ff9d;">{{ (telemetry?.channel?.scintillation_loss_db || 0) | number:'1.2-2' }}<span class="metric-unit">dB</span></div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-label">Beam Spot Radius</div>
+              <div class="metric-val" style="color: #00f0ff;">{{ (telemetry?.channel?.beam_spot_radius_m || 0) | number:'1.2-2' }}<span class="metric-unit">m</span></div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-label">Total Channel Loss</div>
+              <div class="metric-val" [style.color]="((telemetry?.channel?.total_loss_db || 0) > 40) ? '#ef4444' : '#00ff9d'">
+                {{ (telemetry?.channel?.total_loss_db || 0) | number:'1.1-1' }}<span class="metric-unit">dB</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -229,7 +229,7 @@
       <section class="glass-panel">
         <div class="panel-header">
           <div class="panel-title">
-            <span class="icon">🛰</span> Sky-Dome Azimuth &amp; Elevation Radar
+            Sky-Dome Radar
           </div>
           <span class="badge" [ngClass]="telemetry?.satellite?.is_visible ? 'badge-green' : 'badge-amber'">
             {{ telemetry?.satellite?.is_visible ? 'TRACKING' : 'ACQUIRING' }}
@@ -271,29 +271,29 @@
       <section class="glass-panel" style="margin-top: 14px;">
         <div class="panel-header">
           <div class="panel-title">
-            <span class="icon">⚛</span> BB84 Channel Security &amp; Error Attribution
+            BB84 Channel Security
           </div>
-          <span class="badge" [ngClass]="((telemetry?.qkd?.qber || 0) * 100) >= 11 ? 'badge-red' : ((telemetry?.qkd?.qber || 0) * 100) >= 7 ? 'badge-amber' : 'badge-green'">
-            {{ ((telemetry?.qkd?.qber || 0) * 100) >= 11 ? 'CUTOFF ABORT' : 'KEY SIFTING' }}
+          <span class="badge" [ngClass]="!telemetry?.satellite?.is_visible ? 'badge-cyan' : ((telemetry?.qkd?.qber || 0) * 100) >= 11 ? 'badge-red' : ((telemetry?.qkd?.qber || 0) * 100) >= 7 ? 'badge-amber' : 'badge-green'">
+            {{ !telemetry?.satellite?.is_visible ? 'STANDBY' : ((telemetry?.qkd?.qber || 0) * 100) >= 11 ? 'CUTOFF ABORT' : 'KEY SIFTING' }}
           </span>
         </div>
         <div class="panel-body">
           <div class="qkd-summary">
             <div class="qkd-skr-box">
               <div class="metric-label">Secret Key Rate (SKR)</div>
-              <div class="val">{{ ((telemetry?.qkd?.secret_key_rate || 0) / 1000.0) | number:'1.3-3' }} <span style="font-size: 13px; font-weight: 500;">kbps</span></div>
+              <div class="val">{{ (!telemetry?.satellite?.is_visible ? 0 : ((telemetry?.qkd?.secret_key_rate || 0) / 1000.0)) | number:'1.3-3' }} <span style="font-size: 13px; font-weight: 500;">kbps</span></div>
               <div class="qkd-subtext">
-                Raw: {{ ((telemetry?.qkd?.raw_key_rate || 0) / 1000.0) | number:'1.1-1' }}k | Sift: {{ ((telemetry?.qkd?.sifted_key_rate || 0) / 1000.0) | number:'1.1-1' }}k
+                Raw: {{ (!telemetry?.satellite?.is_visible ? 0 : ((telemetry?.qkd?.raw_key_rate || 0) / 1000.0)) | number:'1.1-1' }}k | Sift: {{ (!telemetry?.satellite?.is_visible ? 0 : ((telemetry?.qkd?.sifted_key_rate || 0) / 1000.0)) | number:'1.1-1' }}k
               </div>
             </div>
 
-            <div class="qkd-qber-box" [class.abort-mode]="((telemetry?.qkd?.qber || 0) * 100) >= 11">
+            <div class="qkd-qber-box" [class.abort-mode]="telemetry?.satellite?.is_visible && ((telemetry?.qkd?.qber || 0) * 100) >= 11">
               <div class="metric-label">Total QBER (%)</div>
-              <div class="val" [style.color]="((telemetry?.qkd?.qber || 0) * 100) >= 11 ? '#ef4444' : ((telemetry?.qkd?.qber || 0) * 100) >= 7 ? '#f59e0b' : '#00f0ff'">
-                {{ ((telemetry?.qkd?.qber || 0) * 100) | number:'1.2-2' }}<span style="font-size: 13px;">%</span>
+              <div class="val" [style.color]="!telemetry?.satellite?.is_visible ? '#38bdf8' : ((telemetry?.qkd?.qber || 0) * 100) >= 11 ? '#ef4444' : ((telemetry?.qkd?.qber || 0) * 100) >= 7 ? '#f59e0b' : '#00f0ff'">
+                {{ (!telemetry?.satellite?.is_visible ? 0 : ((telemetry?.qkd?.qber || 0) * 100)) | number:'1.2-2' }}<span style="font-size: 13px;">%</span>
               </div>
               <div class="qkd-subtext">
-                Threshold: 11.0% (BB84 Cutoff)
+                {{ telemetry?.satellite?.is_visible ? 'Threshold: 11.0%' : 'Satellite Sub-Horizon' }}
               </div>
             </div>
           </div>
@@ -301,26 +301,26 @@
           <!-- Root-Cause QBER Decomposition Breakdown -->
           <div class="decomp-container">
             <div class="decomp-title">
-              <span>Root-Cause Error Decomposition</span>
-              <span class="mono">Total: {{ ((telemetry?.qkd?.qber_decomposition?.total_qber || 0) * 100) | number:'1.2-2' }}%</span>
+              <span>Error Decomposition</span>
+              <span class="mono">Total: {{ (!telemetry?.satellite?.is_visible ? 0 : ((telemetry?.qkd?.qber_decomposition?.total_qber || 0) * 100)) | number:'1.2-2' }}%</span>
             </div>
 
             <div class="bar-stack">
-              <div class="bar-slice" style="background: #38bdf8;" [style.width.%]="((telemetry?.qkd?.qber_decomposition?.base_error || 0) / 0.15) * 100" title="Base Optical Error"></div>
-              <div class="bar-slice" style="background: #00f0ff;" [style.width.%]="((telemetry?.qkd?.qber_decomposition?.atmospheric_noise || 0) / 0.15) * 100" title="Atmospheric Turbulence"></div>
-              <div class="bar-slice" style="background: #f59e0b;" [style.width.%]="((telemetry?.qkd?.qber_decomposition?.background_light_noise || 0) / 0.15) * 100" title="Stray Light Background"></div>
-              <div class="bar-slice" style="background: #a855f7;" [style.width.%]="((telemetry?.qkd?.qber_decomposition?.pointing_error || 0) / 0.15) * 100" title="Pointing Jitter"></div>
-              <div class="bar-slice" style="background: #64748b;" [style.width.%]="((telemetry?.qkd?.qber_decomposition?.detector_noise || 0) / 0.15) * 100" title="Dark Counts"></div>
-              <div class="bar-slice" style="background: #ef4444;" [style.width.%]="((telemetry?.qkd?.qber_decomposition?.security_anomaly_component || 0) / 0.15) * 100" title="Attack Anomaly Residual"></div>
+              <div class="bar-slice" style="background: #38bdf8;" [style.width.%]="!telemetry?.satellite?.is_visible ? 0 : (((telemetry?.qkd?.qber_decomposition?.base_error || 0) / 0.15) * 100)" title="Base Optical Error"></div>
+              <div class="bar-slice" style="background: #00f0ff;" [style.width.%]="!telemetry?.satellite?.is_visible ? 0 : (((telemetry?.qkd?.qber_decomposition?.atmospheric_noise || 0) / 0.15) * 100)" title="Atmospheric Turbulence"></div>
+              <div class="bar-slice" style="background: #f59e0b;" [style.width.%]="!telemetry?.satellite?.is_visible ? 0 : (((telemetry?.qkd?.qber_decomposition?.background_light_noise || 0) / 0.15) * 100)" title="Stray Light Background"></div>
+              <div class="bar-slice" style="background: #a855f7;" [style.width.%]="!telemetry?.satellite?.is_visible ? 0 : (((telemetry?.qkd?.qber_decomposition?.pointing_error || 0) / 0.15) * 100)" title="Pointing Jitter"></div>
+              <div class="bar-slice" style="background: #64748b;" [style.width.%]="!telemetry?.satellite?.is_visible ? 0 : (((telemetry?.qkd?.qber_decomposition?.detector_noise || 0) / 0.15) * 100)" title="Dark Counts"></div>
+              <div class="bar-slice" style="background: #ef4444;" [style.width.%]="!telemetry?.satellite?.is_visible ? 0 : (((telemetry?.qkd?.qber_decomposition?.security_anomaly_component || 0) / 0.15) * 100)" title="Attack Anomaly Residual"></div>
             </div>
 
             <div class="decomp-legend">
-              <div class="legend-item"><span class="swatch" style="background: #38bdf8;"></span> Base: {{ ((telemetry?.qkd?.qber_decomposition?.base_error || 0) * 100) | number:'1.1-1' }}%</div>
-              <div class="legend-item"><span class="swatch" style="background: #00f0ff;"></span> Atm: {{ ((telemetry?.qkd?.qber_decomposition?.atmospheric_noise || 0) * 100) | number:'1.1-1' }}%</div>
-              <div class="legend-item"><span class="swatch" style="background: #f59e0b;"></span> Stray: {{ ((telemetry?.qkd?.qber_decomposition?.background_light_noise || 0) * 100) | number:'1.1-1' }}%</div>
-              <div class="legend-item"><span class="swatch" style="background: #a855f7;"></span> Jitter: {{ ((telemetry?.qkd?.qber_decomposition?.pointing_error || 0) * 100) | number:'1.1-1' }}%</div>
-              <div class="legend-item"><span class="swatch" style="background: #64748b;"></span> Dark: {{ ((telemetry?.qkd?.qber_decomposition?.detector_noise || 0) * 100) | number:'1.1-1' }}%</div>
-              <div class="legend-item"><span class="swatch" style="background: #ef4444;"></span> Anomaly: {{ ((telemetry?.qkd?.qber_decomposition?.security_anomaly_component || 0) * 100) | number:'1.1-1' }}%</div>
+              <div class="legend-item"><span class="swatch" style="background: #38bdf8;"></span> Base: {{ (!telemetry?.satellite?.is_visible ? 0 : ((telemetry?.qkd?.qber_decomposition?.base_error || 0) * 100)) | number:'1.1-1' }}%</div>
+              <div class="legend-item"><span class="swatch" style="background: #00f0ff;"></span> Atm: {{ (!telemetry?.satellite?.is_visible ? 0 : ((telemetry?.qkd?.qber_decomposition?.atmospheric_noise || 0) * 100)) | number:'1.1-1' }}%</div>
+              <div class="legend-item"><span class="swatch" style="background: #f59e0b;"></span> Stray: {{ (!telemetry?.satellite?.is_visible ? 0 : ((telemetry?.qkd?.qber_decomposition?.background_light_noise || 0) * 100)) | number:'1.1-1' }}%</div>
+              <div class="legend-item"><span class="swatch" style="background: #a855f7;"></span> Jitter: {{ (!telemetry?.satellite?.is_visible ? 0 : ((telemetry?.qkd?.qber_decomposition?.pointing_error || 0) * 100)) | number:'1.1-1' }}%</div>
+              <div class="legend-item"><span class="swatch" style="background: #64748b;"></span> Dark: {{ (!telemetry?.satellite?.is_visible ? 0 : ((telemetry?.qkd?.qber_decomposition?.detector_noise || 0) * 100)) | number:'1.1-1' }}%</div>
+              <div class="legend-item"><span class="swatch" style="background: #ef4444;"></span> Anomaly: {{ (!telemetry?.satellite?.is_visible ? 0 : ((telemetry?.qkd?.qber_decomposition?.security_anomaly_component || 0) * 100)) | number:'1.1-1' }}%</div>
             </div>
           </div>
         </div>
@@ -330,7 +330,7 @@
       <section class="glass-panel" style="margin-top: 14px;">
         <div class="panel-header">
           <div class="panel-title">
-            <span class="icon">🤖</span> Hierarchical Multi-Agent AI Network
+            Multi-Agent AI Network
           </div>
           <span class="badge" [ngClass]="telemetry?.ai_agents?.security_agent?.detected_anomaly ? 'badge-red' : 'badge-green'">
             {{ telemetry?.ai_agents?.security_agent?.detected_anomaly ? 'CYBER ALERT' : 'AGENTS NOMINAL' }}
@@ -387,38 +387,38 @@
       <section class="glass-panel" style="margin-top: 14px;">
         <div class="panel-header">
           <div class="panel-title">
-            <span class="icon">⚙</span> Transmitter Actuation &amp; Atmospheric Status
+            Transmitter Actuation
           </div>
           <span class="badge badge-purple">{{ telemetry?.control?.mode || 'MULTI_AGENT' }}</span>
         </div>
         <div class="panel-body">
           <div class="actuator-row">
             <div class="actuator-header">
-              <span>Laser Power Output</span>
-              <span class="mono">{{ (telemetry?.control?.current?.transmission_power_pct || 0) | number:'1.1-1' }}% (0 - 100%)</span>
+              <span>Laser Power</span>
+              <span class="mono">{{ (!telemetry?.satellite?.is_visible ? 0 : (telemetry?.control?.current?.transmission_power_pct || 0)) | number:'1.1-1' }}%</span>
             </div>
             <div class="actuator-bar-bg">
-              <div class="actuator-bar-fill" [style.width.%]="telemetry?.control?.current?.transmission_power_pct || 0"></div>
+              <div class="actuator-bar-fill" [style.width.%]="!telemetry?.satellite?.is_visible ? 0 : (telemetry?.control?.current?.transmission_power_pct || 0)"></div>
             </div>
           </div>
 
           <div class="actuator-row">
             <div class="actuator-header">
               <span>Pulse Repetition Frequency</span>
-              <span class="mono">{{ ((telemetry?.control?.current?.photon_rate_norm || 0) * 100.0) | number:'1.1-1' }} MHz</span>
+              <span class="mono">{{ (!telemetry?.satellite?.is_visible ? 0 : ((telemetry?.control?.current?.photon_rate_norm || 0) * 100.0)) | number:'1.1-1' }} MHz</span>
             </div>
             <div class="actuator-bar-bg">
-              <div class="actuator-bar-fill" style="background: linear-gradient(to right, #a855f7, #c084fc);" [style.width.%]="(telemetry?.control?.current?.photon_rate_norm || 0) * 100"></div>
+              <div class="actuator-bar-fill" style="background: linear-gradient(to right, #a855f7, #c084fc);" [style.width.%]="!telemetry?.satellite?.is_visible ? 0 : ((telemetry?.control?.current?.photon_rate_norm || 0) * 100)"></div>
             </div>
           </div>
 
           <div class="actuator-row">
             <div class="actuator-header">
               <span>Beam Divergence Half-Angle</span>
-              <span class="mono">{{ ((telemetry?.control?.current?.beam_divergence_norm || 0) * 50.0) | number:'1.1-1' }} µrad</span>
+              <span class="mono">{{ (!telemetry?.satellite?.is_visible ? 0 : ((telemetry?.control?.current?.beam_divergence_norm || 0) * 50.0)) | number:'1.1-1' }} µrad</span>
             </div>
             <div class="actuator-bar-bg">
-              <div class="actuator-bar-fill" style="background: linear-gradient(to right, #00f0ff, #38bdf8);" [style.width.%]="(telemetry?.control?.current?.beam_divergence_norm || 0) * 100"></div>
+              <div class="actuator-bar-fill" style="background: linear-gradient(to right, #00f0ff, #38bdf8);" [style.width.%]="!telemetry?.satellite?.is_visible ? 0 : ((telemetry?.control?.current?.beam_divergence_norm || 0) * 100)"></div>
             </div>
           </div>
 
@@ -429,7 +429,7 @@
             </div>
             <div class="metric-box">
               <div class="metric-label">Optical SNR</div>
-              <div class="metric-val" style="color: #00ff9d;">{{ (telemetry?.channel?.snr_db || 0) | number:'1.1-1' }}<span class="metric-unit">dB</span></div>
+              <div class="metric-val" style="color: #00ff9d;">{{ (!telemetry?.satellite?.is_visible ? 0 : (telemetry?.channel?.snr_db || 0)) | number:'1.1-1' }}<span class="metric-unit">dB</span></div>
             </div>
           </div>
         </div>
@@ -447,12 +447,12 @@
         {{ telemetry!.alerts[0].message }}
       </span>
       <span style="color: var(--text-muted);" *ngIf="!telemetry?.alerts || telemetry!.alerts.length === 0">
-        ● System nominal. Quantum key distribution channel active and synchronized across satellite pass.
+        System nominal. QKD channel synchronized across satellite pass.
       </span>
     </div>
 
     <div class="mono" style="font-size: 10px; color: var(--text-muted);">
-      OGS TIRUCHIRAPPALLI [10.7905° N, 78.7047° E, 80m] &bull; 100% SOFTWARE DIGITAL TWIN &bull; ASYMPTOTIC BB84 MODEL
+      OGS BOB TIRUCHIRAPPALLI [10.7905° N, 78.7047° E] &bull; DIGITAL TWIN SIMULATION
     </div>
   </footer>
 
@@ -460,23 +460,19 @@
   <div class="modal-backdrop" *ngIf="showResultsModal" (click)="toggleResultsModal()">
     <div class="modal-card" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <span style="font-size: 20px;">🔬</span>
-          <div>
-            <h2 style="font-size: 16px; margin: 0; font-weight: 700; color: var(--text-main); letter-spacing: 0.5px;">
-              Q-SAT RESEARCH EXPERIMENTAL RESULTS &amp; BENCHMARKS
-            </h2>
-            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
-              Provenance: <span class="badge badge-purple" style="display: inline-block; padding: 1px 6px; font-size: 9.5px;">100% SOFTWARE DIGITAL TWIN</span>
-              &bull; 18 Empirical Experiments Conducted &bull; Zero Fabrication
-            </div>
+        <div>
+          <h2 style="font-size: 16px; margin: 0; font-weight: 700; color: var(--text-main); letter-spacing: 0.5px;">
+            Q-SAT Research Benchmark Results
+          </h2>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+            Provenance: DIGITAL TWIN SIMULATION &bull; 18 Empirical Experiments
           </div>
         </div>
 
         <div style="display: flex; gap: 8px; align-items: center;">
           <button class="btn btn-demo" (click)="onRunFullDemonstration()" [disabled]="isRunningDemo" style="padding: 5px 12px; font-size: 11px;">
-            <span *ngIf="isRunningDemo">⏳ Running Demo...</span>
-            <span *ngIf="!isRunningDemo">⚡ RE-RUN DEMONSTRATION</span>
+            <span *ngIf="isRunningDemo">Running Demo...</span>
+            <span *ngIf="!isRunningDemo">RE-RUN DEMONSTRATION</span>
           </button>
           <button class="btn-close" (click)="toggleResultsModal()">✕</button>
         </div>
@@ -485,19 +481,19 @@
       <!-- Modal Tabs -->
       <div class="modal-nav-tabs">
         <button class="modal-tab-btn" [class.active]="activeResultsTab === 'leaderboard'" (click)="setResultsTab('leaderboard')">
-          🏆 Master Leaderboard
+          Master Leaderboard
         </button>
         <button class="modal-tab-btn" [class.active]="activeResultsTab === 'statistics'" (click)="setResultsTab('statistics')">
-          📈 Statistical Validation (10 Seeds)
+          Statistical Validation
         </button>
         <button class="modal-tab-btn" [class.active]="activeResultsTab === 'datasets'" (click)="setResultsTab('datasets')">
-          📁 Empirical Datasets (6 Scenarios)
+          Empirical Datasets
         </button>
         <button class="modal-tab-btn" [class.active]="activeResultsTab === 'figures'" (click)="setResultsTab('figures')">
-          🖼 Key Publication Figures
+          Key Figures
         </button>
         <button class="modal-tab-btn" [class.active]="activeResultsTab === 'report'" (click)="setResultsTab('report')">
-          📄 Research Summary
+          Research Summary
         </button>
       </div>
 
@@ -505,7 +501,7 @@
         <!-- Tab 1: Leaderboard -->
         <div *ngIf="activeResultsTab === 'leaderboard'">
           <div *ngIf="demoSummary && demoSummary.length > 0" class="alert-box" style="margin-bottom: 12px; background: rgba(5, 150, 105, 0.15); border: 1px solid #059669; border-radius: 6px; padding: 10px;">
-            <strong style="color: #10b981;">⚡ Live Demonstration Run Completed!</strong> (120s dynamic pass)
+            <strong style="color: #10b981;">Live Demonstration Run Completed</strong> (120s dynamic pass)
             <div class="table-scroll-container">
               <table class="research-table" style="margin-top: 8px;">
                 <thead>
@@ -536,7 +532,7 @@
             </div>
           </div>
 
-          <h3 style="font-size: 13px; color: var(--text-main); margin-bottom: 8px;">Consolidated Benchmark Leaderboard (300s Standard Mission Pass)</h3>
+          <h3 style="font-size: 13px; color: var(--text-main); margin-bottom: 8px;">Consolidated Benchmark Leaderboard</h3>
           <div class="table-scroll-container">
             <table class="research-table">
               <thead>
@@ -572,7 +568,7 @@
 
         <!-- Tab 2: Statistical Validation -->
         <div *ngIf="activeResultsTab === 'statistics'">
-          <h3 style="font-size: 13px; color: var(--text-main); margin-bottom: 8px;">Monte Carlo Statistical Validation Across 10 Deterministic Seeds</h3>
+          <h3 style="font-size: 13px; color: var(--text-main); margin-bottom: 8px;">Monte Carlo Statistical Validation (10 Seeds)</h3>
           <div class="table-scroll-container">
             <table class="research-table">
               <thead>
@@ -599,12 +595,12 @@
           </div>
         </div>
 
-        <!-- Tab 3: Empirical Datasets (Live Inspector) -->
+        <!-- Tab 3: Empirical Datasets -->
         <div *ngIf="activeResultsTab === 'datasets'">
           <div style="margin-bottom: 14px;">
-            <h3 style="font-size: 13px; color: var(--text-main); margin-bottom: 6px;">Empirical Scenario Telemetry Datasets (Software Ingestion)</h3>
+            <h3 style="font-size: 13px; color: var(--text-main); margin-bottom: 6px;">Empirical Scenario Telemetry Datasets</h3>
             <p style="font-size: 11px; color: var(--text-muted); margin: 0;">
-              All 6 simulation scenarios are backed by recorded empirical time-series datasets stored under <code>simulation/generated_data/</code>. Click a scenario to inspect its live data samples and statistical distribution:
+              All 6 simulation scenarios are backed by recorded empirical time-series datasets. Select a scenario to inspect its samples:
             </p>
           </div>
 
@@ -628,7 +624,7 @@
                 <strong>File:</strong> <code>{{ selectedDatasetData.filename }}</code> &bull;
                 <strong>Samples:</strong> {{ selectedDatasetData.total_samples }} timesteps
               </div>
-              <span class="badge badge-green">100% SOFTWARE GROUND TRUTH</span>
+              <span class="badge badge-green">GROUND TRUTH</span>
             </div>
 
             <!-- Scrollable Data Table -->
@@ -667,19 +663,19 @@
         <div *ngIf="activeResultsTab === 'figures'">
           <div class="figures-grid">
             <div class="figure-card">
-              <div class="figure-title">Multi-Dimensional Spider Benchmark (Exp 18)</div>
+              <div class="figure-title">Master Comparison Spider Radar</div>
               <img src="/results-static/experiments/final_table/master_comparison_spider.png" alt="Spider Radar Comparison" class="figure-img" />
             </div>
             <div class="figure-card">
-              <div class="figure-title">Leaderboard Key Delivered (Exp 18)</div>
+              <div class="figure-title">Leaderboard Key Delivered</div>
               <img src="/results-static/experiments/final_table/master_leaderboard_bar.png" alt="Leaderboard Bar" class="figure-img" />
             </div>
             <div class="figure-card">
-              <div class="figure-title">Dynamic Weather Transition Timeline (Exp 8)</div>
+              <div class="figure-title">Dynamic Weather Transition Timeline</div>
               <img src="/results-static/experiments/dynamic_weather/dynamic_weather_timeline.png" alt="Dynamic Weather Timeline" class="figure-img" />
             </div>
             <div class="figure-card">
-              <div class="figure-title">Statistical Confidence Intervals (Exp 17)</div>
+              <div class="figure-title">Statistical Confidence Intervals</div>
               <img src="/results-static/experiments/statistics/confidence_intervals.png" alt="Statistical Confidence Intervals" class="figure-img" />
             </div>
           </div>
@@ -688,14 +684,14 @@
         <!-- Tab 5: Report Summary -->
         <div *ngIf="activeResultsTab === 'report'">
           <div class="report-box">
-            <h4 style="margin-top: 0; color: #38bdf8;">Comprehensive Research Document Available</h4>
+            <h4 style="margin-top: 0; color: #38bdf8;">Comprehensive Research Findings</h4>
             <p style="font-size: 12px; line-height: 1.6; color: var(--text-main);">
-              The complete research report has been compiled directly into <code>results/final_summary.md</code> with zero fabrication, documenting all 18 experiments, mathematical derivations, physical channel models, and empirical findings.
+              The experimental results demonstrate that the Hierarchical Multi-Agent controller dynamically optimizes transmission power, pulse repetition frequency, and beam divergence to maximize key distribution while rejecting eavesdropping interference.
             </p>
             <ul style="font-size: 11.5px; line-height: 1.8; color: var(--text-muted);">
-              <li><strong>Multi-Agent Supremacy:</strong> 54.2 kbits vs 10.7 kbits static baseline (+406.5% key yield).</li>
-              <li><strong>Physical Security Discrimination:</strong> Zero false alarms during natural optical storms with 100% anomaly detection on eavesdropping intrusions.</li>
-              <li><strong>Publication Grade Artifacts:</strong> 30+ figures saved at 300 DPI across <code>results/experiments/</code>.</li>
+              <li><strong>Multi-Agent Supremacy:</strong> 54.2 kbits delivered (+406.5% over static baseline).</li>
+              <li><strong>Security Discrimination:</strong> 100% detection rate on anomalous cyberattack intrusions without false alarms during natural optical turbulence.</li>
+              <li><strong>Physical Link Feasibility:</strong> Preserved optical link margin across varying atmospheric extinction regimes.</li>
             </ul>
           </div>
         </div>

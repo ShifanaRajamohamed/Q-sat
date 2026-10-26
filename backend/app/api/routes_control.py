@@ -1,6 +1,6 @@
 """Ground station control and actuator API routes."""
 
-from typing import Literal
+from typing import Literal, Optional
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
 from backend.app.models.control import ControlAction, ControlDelta
@@ -10,9 +10,17 @@ router = APIRouter(prefix="/api/control", tags=["Control"])
 
 
 class SwitchControllerRequest(BaseModel):
-    controller_type: Literal["STATIC", "RULE_BASED", "PPO", "MULTI_AGENT"] = Field(
-        ..., description="Desired controller type"
+    controller_type: Optional[Literal["STATIC", "RULE_BASED", "PPO", "MULTI_AGENT"]] = Field(
+        None, description="Desired controller type"
     )
+    mode: Optional[Literal["STATIC", "RULE_BASED", "PPO", "MULTI_AGENT"]] = Field(
+        None, description="Alternative key for desired controller type"
+    )
+
+    @property
+    def target_mode(self) -> Literal["STATIC", "RULE_BASED", "PPO", "MULTI_AGENT"]:
+        val = self.controller_type or self.mode or "MULTI_AGENT"
+        return val
 
 
 @router.get("/current", response_model=ControlAction, summary="Get current actuator control parameters")
@@ -28,10 +36,12 @@ async def get_control_delta() -> ControlDelta:
 
 
 @router.post("/mode", summary="Switch active controller type")
+@router.post("/switch", summary="Switch active controller type (alias)")
 async def set_controller_mode(payload: SwitchControllerRequest):
     """Switch between STATIC, RULE_BASED, PPO, and MULTI_AGENT controllers."""
-    control_service.set_controller_type(payload.controller_type)
-    return {"status": "success", "active_controller": payload.controller_type}
+    mode = payload.target_mode
+    control_service.set_controller_type(mode)
+    return {"status": "success", "active_controller": mode}
 
 
 @router.post("/step", response_model=ControlAction, summary="Execute one control decision step")

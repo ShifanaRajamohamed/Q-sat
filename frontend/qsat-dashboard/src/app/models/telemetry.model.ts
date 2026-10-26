@@ -61,7 +61,7 @@ export interface QKDTelemetry {
   channel_loss_db: number;
   channel_transmittance: number;
   is_key_distillation_possible: boolean;
-  status_label: 'SECURE' | 'DEGRADED' | 'ANOMALY' | 'ABORT';
+  status_label: 'SECURE' | 'DEGRADED' | 'ANOMALY' | 'ABORT' | 'OPTIMAL' | 'CRITICAL_QBER' | 'LINK_DOWN' | string;
 }
 
 export interface ControlTelemetry {

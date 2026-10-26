@@ -9,6 +9,8 @@ from backend.app.models.environment import (
     SimulationStepRequest,
 )
 from backend.app.services.environment_service import environment_service
+from backend.app.services.satellite_service import satellite_service
+from backend.app.services.qkd_service import qkd_service
 
 router = APIRouter(prefix="/api/simulation", tags=["Simulation"])
 
@@ -32,8 +34,11 @@ async def step_simulation(payload: SimulationStepRequest) -> EnvironmentData:
 
 
 @router.post("/reset", response_model=EnvironmentData, summary="Reset simulation state")
+@router.post("/fast-forward-pass", response_model=EnvironmentData, summary="Jump satellite directly into active optical pass")
 async def reset_simulation(seed: Optional[int] = Query(None, description="Deterministic random seed")) -> EnvironmentData:
-    """Reset the environmental simulation to initial baseline conditions."""
+    """Reset the environmental simulation and jump satellite to active pass window."""
+    satellite_service.reset(timestamp=60.0)
+    qkd_service.clear_anomaly()
     return environment_service.reset(seed=seed)
 
 
