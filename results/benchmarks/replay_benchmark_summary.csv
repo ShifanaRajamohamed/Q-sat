@@ -1,0 +1,7 @@
+Controller,Total Secret Key (kbits),Mean SKR (kbps),Mean QBER (%),Link Availability (%),Electrical Energy (Joules),Energy Efficiency (kbits/J),Energy Proxy (%·s),Action Variation RMS (%),Mean Decision Latency (ms)
+STATIC,0.0,0.0,28.95,0.0,50.17,0.0,15050.0,0.0,0.007
+RULE_BASED,0.0,0.0,30.8,0.0,100.2,0.0,30060.0,1.73,0.055
+MULTI_AGENT,4.1,0.014,15.52,51.5,95.22,0.043,28565.0,1.66,0.066
+ABLATION_NO_WEATHER,4.1,0.014,15.52,51.5,95.22,0.043,28565.0,1.66,0.083
+ABLATION_NO_SECURITY,4.1,0.014,15.52,51.5,95.22,0.043,28565.0,1.66,0.079
+PPO,0.0,0.0,50.0,0.0,10.89,0.0,3266.4,0.28,0.636

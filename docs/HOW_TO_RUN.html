@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Q-SAT – Installation, Deployment & Run Guide</title>
+<style>
+  /* ── Base reset & fonts ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: 11pt;
+    line-height: 1.65;
+    color: #1a1a2e;
+    background: #fff;
+  }
+
+  /* ── Print / PDF setup ── */
+  @page {
+    size: A4;
+    margin: 18mm 18mm 22mm 18mm;
+  }
+  @page :first { margin-top: 10mm; }
+
+  @media print {
+    body { font-size: 10.5pt; }
+    .no-print { display: none !important; }
+    .page-break { page-break-before: always; }
+    h1, h2, h3, h4 { page-break-after: avoid; }
+    pre, table { page-break-inside: avoid; }
+    a { color: inherit; text-decoration: none; }
+  }
+
+  /* ── Cover page ── */
+  .cover {
+    background: linear-gradient(135deg, #0f0c29 0%, #1a1a2e 40%, #16213e 100%);
+    color: #fff;
+    padding: 60px 50px 50px;
+    border-radius: 4px;
+    margin-bottom: 36px;
+    min-height: 220px;
+  }
+  .cover .badge-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+  .badge {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    padding: 3px 11px;
+    font-size: 8.5pt;
+    letter-spacing: 0.3px;
+  }
+  .cover h1 {
+    font-size: 22pt;
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 8px;
+    color: #e2e8f0;
+  }
+  .cover .subtitle {
+    font-size: 11pt;
+    color: #94a3b8;
+    margin-bottom: 24px;
+    font-style: italic;
+  }
+  .cover .doc-meta {
+    font-size: 9pt;
+    color: #64748b;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-top: 14px;
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+  .cover .doc-meta span strong { color: #94a3b8; }
+
+  /* ── Print-instruction banner ── */
+  .print-banner {
+    background: #fffbeb;
+    border: 1.5px solid #f59e0b;
+    border-radius: 6px;
+    padding: 10px 16px;
+    font-size: 9.5pt;
+    color: #78350f;
+    margin-bottom: 28px;
+  }
+  .print-banner strong { color: #b45309; }
+
+  /* ── TOC ── */
+  .toc { margin-bottom: 32px; }
+  .toc h2 {
+    font-size: 13pt;
+    font-weight: 700;
+    color: #0f172a;
+    border-bottom: 2px solid #3b82f6;
+    padding-bottom: 5px;
+    margin-bottom: 14px;
+  }
+  .toc ol { padding-left: 22px; }
+  .toc li { margin: 4px 0; font-size: 10pt; }
+  .toc li a { color: #1d4ed8; text-decoration: none; }
+  .toc li a:hover { text-decoration: underline; }
+  .toc .sub { padding-left: 18px; list-style-type: lower-alpha; font-size: 9.5pt; color: #475569; }
+
+  /* ── Section headings ── */
+  h2.section-title {
+    font-size: 15pt;
+    font-weight: 800;
+    color: #0f172a;
+    border-left: 5px solid #3b82f6;
+    padding-left: 12px;
+    margin: 32px 0 14px;
+  }
+  h3.sub-title {
+    font-size: 12pt;
+    font-weight: 700;
+    color: #1e3a5f;
+    margin: 20px 0 8px;
+    padding-left: 6px;
+    border-bottom: 1px dashed #cbd5e1;
+    padding-bottom: 3px;
+  }
+  h4 {
+    font-size: 10.5pt;
+    font-weight: 700;
+    color: #334155;
+    margin: 14px 0 5px;
+  }
+
+  /* ── Prose ── */
+  p { margin-bottom: 10px; color: #334155; }
+
+  /* ── Step boxes ── */
+  .step-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin: 14px 0;
+  }
+  .step-box {
+    border: 1px solid #e2e8f0;
+    border-left: 5px solid #3b82f6;
+    border-radius: 4px;
+    padding: 14px 18px;
+    background: #f8fafc;
+  }
+  .step-box.warn  { border-left-color: #f59e0b; background: #fffbeb; }
+  .step-box.ok    { border-left-color: #22c55e; background: #f0fdf4; }
+  .step-box.note  { border-left-color: #8b5cf6; background: #faf5ff; }
+  .step-box.danger{ border-left-color: #ef4444; background: #fef2f2; }
+  .step-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+  .step-num {
+    background: #3b82f6;
+    color: #fff;
+    font-size: 9pt;
+    font-weight: 800;
+    border-radius: 50%;
+    width: 24px; height: 24px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .step-box.warn  .step-num { background: #f59e0b; }
+  .step-box.ok    .step-num { background: #22c55e; }
+  .step-box.note  .step-num { background: #8b5cf6; }
+  .step-box.danger .step-num { background: #ef4444; }
+  .step-title { font-weight: 700; font-size: 10.5pt; color: #0f172a; }
+
+  /* ── Code blocks ── */
+  pre {
+    background: #0f172a;
+    color: #e2e8f0;
+    border-radius: 6px;
+    padding: 14px 18px;
+    font-family: "Cascadia Code", "Consolas", "Courier New", monospace;
+    font-size: 9pt;
+    overflow-x: auto;
+    margin: 8px 0 12px;
+    line-height: 1.6;
+    border: 1px solid #1e293b;
+  }
+  code {
+    font-family: "Cascadia Code", "Consolas", "Courier New", monospace;
+    background: #f1f5f9;
+    color: #be185d;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 9pt;
+  }
+  pre code { background: transparent; color: inherit; padding: 0; }
+  .comment { color: #64748b; }
+  .cmd     { color: #86efac; }
+  .path    { color: #fbbf24; }
+  .flag    { color: #93c5fd; }
+
+  /* ── Tables ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 9.5pt;
+  }
+  th {
+    background: #1e3a5f;
+    color: #e2e8f0;
+    padding: 7px 10px;
+    text-align: left;
+    font-weight: 600;
+  }
+  td {
+    padding: 6px 10px;
+    border-bottom: 1px solid #e2e8f0;
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: #f8fafc; }
+  tr:hover td { background: #eff6ff; }
+
+  /* ── Checklist ── */
+  .checklist { list-style: none; padding: 0; margin: 8px 0; }
+  .checklist li { padding: 4px 0 4px 24px; position: relative; font-size: 10pt; }
+  .checklist li::before {
+    content: "☐";
+    position: absolute; left: 0;
+    color: #3b82f6; font-size: 11pt;
+  }
+  .checklist li.done::before { content: "✔"; color: #22c55e; }
+
+  /* ── Info pills ── */
+  .pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 8pt;
+    font-weight: 600;
+    margin-right: 4px;
+  }
+  .pill-blue   { background: #dbeafe; color: #1e40af; }
+  .pill-green  { background: #dcfce7; color: #166534; }
+  .pill-yellow { background: #fef3c7; color: #92400e; }
+  .pill-purple { background: #ede9fe; color: #5b21b6; }
+  .pill-red    { background: #fee2e2; color: #991b1b; }
+
+  /* ── URL display ── */
+  .url-box {
+    background: #f0fdf4;
+    border: 1px solid #86efac;
+    border-radius: 4px;
+    padding: 8px 14px;
+    font-family: monospace;
+    font-size: 9.5pt;
+    color: #166534;
+    margin: 6px 0;
+  }
+
+  /* ── Architecture box ── */
+  .arch-box {
+    background: #0f172a;
+    color: #e2e8f0;
+    border-radius: 6px;
+    padding: 16px 20px;
+    font-family: "Cascadia Code", "Consolas", monospace;
+    font-size: 8.5pt;
+    line-height: 1.7;
+    margin: 10px 0;
+  }
+
+  /* ── Footer ── */
+  .footer {
+    margin-top: 40px;
+    padding-top: 12px;
+    border-top: 1px solid #e2e8f0;
+    font-size: 8.5pt;
+    color: #94a3b8;
+    text-align: center;
+  }
+
+  /* ── Divider ── */
+  hr { border: none; border-top: 1.5px solid #e2e8f0; margin: 22px 0; }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════
+     PRINT BANNER (hidden in PDF)
+════════════════════════════════════════════ -->
+<div class="print-banner no-print">
+  <strong>📄 To save as PDF:</strong> Press <strong>Ctrl + P</strong> → Set Destination to <strong>"Save as PDF"</strong> → Paper size <strong>A4</strong> → Margins <strong>Default</strong> → Enable <strong>Background graphics</strong> → Click Save.
+</div>
+
+<!-- ════════════════════════════════════════════
+     COVER
+════════════════════════════════════════════ -->
+<div class="cover">
+  <div class="badge-row">
+    <span class="badge">🐍 Python 3.12+</span>
+    <span class="badge">⚡ FastAPI 0.115+</span>
+    <span class="badge">🅰️ Angular 22+</span>
+    <span class="badge">🔦 PyTorch 2.4+</span>
+    <span class="badge">🛰️ QKD / BB84</span>
+    <span class="badge">🪟 Windows / Linux / macOS</span>
+  </div>
+  <h1>Q-SAT Adaptive Ground Station</h1>
+  <div class="subtitle">An Intelligent Hardware-in-the-Loop Digital Twin &amp; Adaptive AI Framework<br>for Satellite-to-Ground Quantum Key Distribution</div>
+  <div class="doc-meta">
+    <span><strong>Document type:</strong> Installation, Deployment &amp; Run Guide</span>
+    <span><strong>Version:</strong> 0.1.0</span>
+    <span><strong>Scope:</strong> Windows · Linux · macOS</span>
+    <span><strong>Audience:</strong> Developers, Researchers, Evaluators</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     TABLE OF CONTENTS
+════════════════════════════════════════════ -->
+<div class="toc">
+  <h2>Table of Contents</h2>
+  <ol>
+    <li><a href="#sec1">System Overview</a></li>
+    <li><a href="#sec2">Prerequisites &amp; Software Requirements</a>
+      <ol class="sub">
+        <li>Required software</li>
+        <li>Hardware requirements</li>
+        <li>Network &amp; port requirements</li>
+      </ol>
+    </li>
+    <li><a href="#sec3">Step-by-Step Installation</a>
+      <ol class="sub">
+        <li>Install Python 3.12</li>
+        <li>Install Node.js 20 LTS</li>
+        <li>Clone / extract the project</li>
+        <li>Create Python virtual environment</li>
+        <li>Install Python dependencies</li>
+        <li>Install Node.js dependencies &amp; build the frontend</li>
+        <li>Create environment configuration (.env)</li>
+      </ol>
+    </li>
+    <li><a href="#sec4">Running the Application</a>
+      <ol class="sub">
+        <li>Start the backend server</li>
+        <li>Verify the backend is running</li>
+        <li>Open the web dashboard</li>
+        <li>Run with Angular dev server (optional)</li>
+      </ol>
+    </li>
+    <li><a href="#sec5">Running Experiments &amp; Benchmarks</a></li>
+    <li><a href="#sec6">Hardware-in-the-Loop Mode (Optional)</a></li>
+    <li><a href="#sec7">Docker Deployment (Optional)</a></li>
+    <li><a href="#sec8">Running the Test Suite</a></li>
+    <li><a href="#sec9">Configuration Reference</a></li>
+    <li><a href="#sec10">Troubleshooting</a></li>
+    <li><a href="#sec11">Quick Reference Card</a></li>
+  </ol>
+</div>
+
+<hr>
+
+<!-- ════════════════════════════════════════════
+     SECTION 1 — OVERVIEW
+════════════════════════════════════════════ -->
+<h2 class="section-title" id="sec1">1 · System Overview</h2>
+
+<p>
+  <strong>Q-SAT</strong> is an end-to-end research simulation and adaptive control platform that models a
+  Low Earth Orbit (LEO) satellite transmitting polarised single-photon pulses to an Optical Ground Station
+  (OGS) using the <strong>BB84 Quantum Key Distribution (QKD)</strong> protocol. The system consists of
+  three major runtime components that work together:
+</p>
+
+<div class="arch-box">
+┌────────────────────────────────────────────────────────────────────┐
+│                   Q-SAT RUNTIME COMPONENTS                        │
+├────────────────────────────────────────────────────────────────────┤
+│                                                                    │
+│  ① FASTAPI BACKEND  ───────────────────────────────  port 8000   │
+│     Python 3.12 · Uvicorn ASGI · REST + WebSocket                 │
+│     Digital Twin · BB84 QKD Engine · AI Controllers               │
+│     SQLite database  (qsat.db)                                    │
+│                                                                    │
+│  ② ANGULAR DASHBOARD  ─────────────────────  /dashboard/ (built) │
+│     Angular 22 · TypeScript · ECharts                             │
+│     Served statically from the backend at /dashboard/             │
+│     OR via Angular dev server at  port 4200 (development)         │
+│                                                                    │
+│  ③ MQTT BROKER  (optional, HIL mode only) ────────  port 1883    │
+│     Eclipse Mosquitto 2.0  (Docker or native install)             │
+│     Only required when  ENVIRONMENT_MODE=mqtt                     │
+│                                                                    │
+└────────────────────────────────────────────────────────────────────┘
+</div>
+
+<p>
+  In the default <strong>simulation mode</strong>, only the backend is required — the Angular frontend is
+  built once and served by FastAPI. No external database server, Redis, or MQTT broker is needed for
+  standard operation.
+</p>
+
+<hr>
+
+<!-- ════════════════════════════════════════════
+     SECTION 2 — PREREQUISITES
+════════════════════════════════════════════ -->
+<div class="page-break"></div>
+<h2 class="section-title" id="sec2">2 · Prerequisites &amp; Software Requirements</h2>
+
+<h3 class="sub-title">2a. Required Software</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Software</th>
+      <th>Minimum Version</th>
+      <th>Purpose</th>
+      <th>Download URL</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Python</strong></td>
+      <td>3.12.x</td>
+      <td>Backend runtime, AI models, experiments</td>
+      <td>python.org/downloads</td>
+    </tr>
+    <tr>
+      <td><strong>pip</strong></td>
+      <td>24.0+</td>
+      <td>Python package installer (bundled with Python)</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td><strong>Node.js</strong></td>
+      <td>20 LTS</td>
+      <td>Angular frontend build toolchain</td>
+      <td>nodejs.org/en/download</td>
+    </tr>
+    <tr>
+      <td><strong>npm</strong></td>
+      <td>11.x</td>
+      <td>Node package manager (bundled with Node.js)</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td><strong>Git</strong></td>
+      <td>2.x</td>
+      <td>Clone the repository</td>
+      <td>git-scm.com/downloads</td>
+    </tr>
+    <tr>
+      <td><strong>Docker Desktop</strong> <span class="pill pill-yellow">optional</span></td>
+      <td>4.x</td>
+      <td>Docker Compose deployment only</td>
+      <td>docker.com/products/docker-desktop</td>
+    </tr>
+    <tr>
+      <td><strong>Mosquitto MQTT</strong> <span class="pill pill-yellow">optional</span></td>
+      <td>2.0</td>
+      <td>Hardware-in-the-loop mode only</td>
+      <td>mosquitto.org/download</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 class="sub-title">2b. Hardware Requirements</h3>
+
+<table>
+  <thead><tr><th>Component</th><th>Minimum</th><th>Recommended</th></tr></thead>
+  <tbody>
+    <tr><td>CPU</td><td>Dual-core 2 GHz</td><td>Quad-core 3 GHz+ (for PPO training)</td></tr>
+    <tr><td>RAM</td><td>8 GB</td><td>16 GB (PyTorch requires ~2 GB at runtime)</td></tr>
+    <tr><td>Disk (free)</td><td>6 GB</td><td>10 GB (PyTorch wheels are ~2.5 GB)</td></tr>
+    <tr><td>GPU</td><td>Not required</td><td>CUDA-capable GPU speeds up PPO training</td></tr>
+    <tr><td>OS</td><td>Windows 10 / Ubuntu 20.04 / macOS 12</td><td>Windows 11 / Ubuntu 22.04 / macOS 13</td></tr>
+  </tbody>
+</table>
+
+<h3 class="sub-title">2c. Network &amp; Port Requirements</h3>
+
+<table>
+  <thead><tr><th>Port</th><th>Service</th><th>Required?</th></tr></thead>
+  <tbody>
+    <tr><td><code>8000</code></td><td>FastAPI backend (REST + WebSocket)</td><td><span class="pill pill-red">Always</span></td></tr>
+    <tr><td><code>4200</code></td><td>Angular dev server (dev mode only)</td><td><span class="pill pill-yellow">Optional</span></td></tr>
+    <tr><td><code>1883</code></td><td>MQTT broker (hardware-in-the-loop mode)</td><td><span class="pill pill-yellow">Optional</span></td></tr>
+    <tr><td><code>9001</code></td><td>MQTT over WebSocket</td><td><span class="pill pill-yellow">Optional</span></td></tr>
+  </tbody>
+</table>
+
+<hr>
+
+<!-- ════════════════════════════════════════════
+     SECTION 3 — INSTALLATION
+════════════════════════════════════════════ -->
+<div class="page-break"></div>
+<h2 class="section-title" id="sec3">3 · Step-by-Step Installation</h2>
+
+<!-- STEP 1 -->
+<div class="step-grid">
+<div class="step-box">
+  <div class="step-header">
+    <div class="step-num">1</div>
+    <div class="step-title">Install Python 3.12</div>
+  </div>
+  <p>Download the official installer for your OS from <strong>python.org/downloads</strong>.</p>
+
+  <h4>Windows</h4>
+  <ol>
+    <li>Download <code>python-3.12.x-amd64.exe</code> from python.org.</li>
+    <li>Run the installer. On the first screen, <strong>check "Add Python to PATH"</strong> before clicking Install.</li>
+    <li>Select <em>"Install for all users"</em> for system-wide availability.</li>
+  </ol>
+
+  <h4>Linux (Ubuntu / Debian)</h4>
+  <pre><code><span class="cmd">sudo apt update</span>
+<span class="cmd">sudo apt install -y software-properties-common</span>
+<span class="cmd">sudo add-apt-repository ppa:deadsnakes/ppa -y</span>
+<span class="cmd">sudo apt install -y python3.12 python3.12-venv python3.12-dev</span></code></pre>
+
+  <h4>macOS</h4>
+  <pre><code><span class="comment"># Using Homebrew</span>
+<span class="cmd">brew install python@3.12</span></code></pre>
+
+  <h4>Verify installation</h4>
+  <pre><code><span class="cmd">python --version</span>
+<span class="comment"># Expected output: Python 3.12.x</span></code></pre>
+</div>
+
+<!-- STEP 2 -->
+<div class="step-box">
+  <div class="step-header">
+    <div class="step-num">2</div>
+    <div class="step-title">Install Node.js 20 LTS</div>
+  </div>
+  <p>Download the official LTS installer from <strong>nodejs.org/en/download</strong>. Choose the <em>LTS</em> channel (v20.x).</p>
+
+  <h4>Windows</h4>
+  <p>Download and run the <code>node-v20.x.x-x64.msi</code> installer. Accept defaults — npm is included automatically.</p>
+
+  <h4>Linux (Ubuntu / Debian) — via NodeSource</h4>
+  <pre><code><span class="cmd">curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -</span>
+<span class="cmd">sudo apt install -y nodejs</span></code></pre>
+
+  <h4>macOS</h4>
+  <pre><code><span class="cmd">brew install node@20</span>
+<span class="cmd">brew link --overwrite node@20</span></code></pre>
+
+  <h4>Verify installation</h4>
+  <pre><code><span class="cmd">node --version</span>    <span class="comment"># Expected: v20.x.x</span>
+<span class="cmd">npm  --version</span>    <span class="comment"># Expected: 10.x or 11.x</span></code></pre>
+</div>
+
+<!-- STEP 3 -->
+<div class="step-box">
+  <div class="step-header">
+    <div class="step-num">3</div>
+    <div class="step-title">Get the Project Source Code</div>
+  </div>
+
+  <h4>Option A — Clone with Git (recommended)</h4>
+  <pre><code><span class="cmd">git clone https://github.com/your-org/q-sat.git</span>
+<span class="cmd">cd q-sat</span></code></pre>
+
+  <h4>Option B — Extract from ZIP archive</h4>
+  <p>Unzip the provided <code>Q-SAT-source.zip</code> to a folder of your choice, then open a terminal in that folder.</p>
+
+  <div class="step-box note" style="margin-top:8px;">
+    <div class="step-header">
+      <div class="step-num" style="background:#8b5cf6">ℹ</div>
+      <div class="step-title">Project root from here on</div>
+    </div>
+    <p style="margin:0">All commands in this guide are run from the <strong>project root directory</strong> (the folder containing <code>backend/</code>, <code>frontend/</code>, <code>.env.example</code>, etc.).</p>
+  </div>
+</div>
+
+<!-- STEP 4 -->
+<div class="step-box">
+  <div class="step-header">
+    <div class="step-num">4</div>
+    <div class="step-title">Create a Python Virtual Environment</div>
+  </div>
+  <p>A virtual environment isolates project dependencies from your system Python.</p>
+
+  <h4>Windows (PowerShell)</h4>
+  <pre><code><span class="comment"># Create the virtual environment</span>
+<span class="cmd">python -m venv .venv</span>
+
+<span class="comment"># Activate it</span>
+<span class="cmd">.\.venv\Scripts\Activate.ps1</span>
+
+<span class="comment"># If you get an execution policy error, run this first:</span>
+<span class="cmd">Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser</span></code></pre>
+
+  <h4>Linux / macOS</h4>
+  <pre><code><span class="cmd">python3.12 -m venv .venv</span>
+<span class="cmd">source .venv/bin/activate</span></code></pre>
+
+  <p>Your terminal prompt will now show <code>(.venv)</code> to confirm the environment is active.</p>
+
+  <div class="step-box warn" style="margin-top:8px;">
+    <div class="step-header">
+      <div class="step-num">!</div>
+      <div class="step-title">Always activate the venv before running Q-SAT</div>
+    </div>
+    <p style="margin:0">You must activate the virtual environment every time you open a new terminal session before running any Python commands for this project.</p>
+  </div>
+</div>
+
+<!-- STEP 5 -->
+<div class="step-box">
+  <div class="step-header">
+    <div class="step-num">5</div>
+    <div class="step-title">Install Python Dependencies</div>
+  </div>
+  <p>With the virtual environment active, install all required Python packages:</p>
+
+  <pre><code><span class="comment"># Upgrade pip first</span>
+<span class="cmd">pip install --upgrade pip</span>
+
+<span class="comment"># Install all project dependencies</span>
+<span class="cmd">pip install -r backend/requirements.txt</span></code></pre>
+
+  <div class="step-box warn" style="margin-top:8px;">
+    <div class="step-header">
+      <div class="step-num">⏱</div>
+      <div class="step-title">This step takes 5–15 minutes</div>
+    </div>
+    <p style="margin:0"><strong>PyTorch</strong> (≈2.5 GB download) is the largest dependency. Ensure you have a stable internet connection. Progress is shown in the terminal.</p>
+  </div>
+
+  <h4>CPU-only PyTorch (faster download, ~500 MB)</h4>
+  <p>If you don't have a CUDA GPU, you can install the lighter CPU-only build first:</p>
+  <pre><code><span class="cmd">pip install torch --index-url https://download.pytorch.org/whl/cpu</span>
+<span class="cmd">pip install -r backend/requirements.txt</span></code></pre>
+
+  <h4>Verify</h4>
+  <pre><code><span class="cmd">python -c "import fastapi, torch, skyfield; print('All core packages OK')"</span>
+<span class="comment"># Expected: All core packages OK</span></code></pre>
+</div>
+
+<!-- STEP 6 -->
+<div class="step-box">
+  <div class="step-header">
+    <div class="step-num">6</div>
+    <div class="step-title">Install Node.js Dependencies &amp; Build the Angular Frontend</div>
+  </div>
+
+  <pre><code><span class="comment"># Navigate to the frontend directory</span>
+<span class="cmd">cd frontend/qsat-dashboard</span>
+
+<span class="comment"># Install all Node.js dependencies (uses package-lock.json for exact versions)</span>
+<span class="cmd">npm ci</span>
+
+<span class="comment"># Build the Angular application for production</span>
+<span class="cmd">npm run build</span>
+
+<span class="comment"># Return to project root</span>
+<span class="cmd">cd ../..</span>   <span class="comment"># Windows: cd ..\..  </span></code></pre>
+
+  <p>The build output is placed at <code>frontend/qsat-dashboard/dist/qsat-dashboard/browser/</code>. The FastAPI backend auto-detects and serves this at <code>/dashboard/</code>.</p>
+
+  <div class="step-box note" style="margin-top:8px;">
+    <div class="step-header">
+      <div class="step-num" style="background:#8b5cf6">ℹ</div>
+      <div class="step-title">Build takes ~2 minutes</div>
+    </div>
+    <p style="margin:0">Angular's build compiles TypeScript, bundles assets, and optimises for production. This only needs to be done once (or after frontend code changes).</p>
+  </div>
+</div>
+
+<!-- STEP 7 -->
+<div class="step-box">
+  <div class="step-header">
+    <div class="step-num">7</div>
+    <div class="step-title">Create the Environment Configuration File (.env)</div>
+  </div>
+  <p>Copy the provided template to create your local configuration:</p>
+
+  <h4>Windows (PowerShell)</h4>
+  <pre><code><span class="cmd">Copy-Item .env.example .env</span></code></pre>
+
+  <h4>Linux / macOS</h4>
+  <pre><code><span class="cmd">cp .env.example .env</span></code></pre>
+
+  <p>The default <code>.env</code> settings work out of the box for simulation mode. Edit <code>.env</code> only if you need to change ports, ground station coordinates, or switch to MQTT hardware mode. Key settings:</p>
+
+  <table>
+    <thead><tr><th>Variable</th><th>Default</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>ENVIRONMENT_MODE</code></td><td><code>simulation</code></td><td>Use <code>mqtt</code> for hardware-in-the-loop</td></tr>
+      <tr><td><code>API_PORT</code></td><td><code>8000</code></td><td>Backend server port</td></tr>
+      <tr><td><code>GROUND_STATION_LAT</code></td><td><code>10.7905</code></td><td>Latitude (NIT Trichy default)</td></tr>
+      <tr><td><code>GROUND_STATION_LON</code></td><td><code>78.7047</code></td><td>Longitude</td></tr>
+      <tr><td><code>GROUND_STATION_ALT</code></td><td><code>80.0</code></td><td>Altitude in metres</td></tr>
+      <tr><td><code>DEBUG</code></td><td><code>false</code></td><td>Set <code>true</code> for auto-reload in dev</td></tr>
+    </tbody>
+  </table>
+</div>
+</div><!-- end step-grid -->
+
+<hr>
+
+<!-- ════════════════════════════════════════════
+     SECTION 4 — RUNNING THE APPLICATION
+════════════════════════════════════════════ -->
+<div class="page-break"></div>
+<h2 class="section-title" id="sec4">4 · Running the Application</h2>
+
+<h3 class="sub-title">4a. Start the Backend Server</h3>
+
+<p>Make sure your virtual environment is active, then run from the project root:</p>
+
+<h4>Production / Stable Mode</h4>
+<pre><code><span class="comment"># Activate venv first (if not already active)</span>
+<span class="comment"># Windows:  .\.venv\Scripts\Activate.ps1</span>
+<span class="comment"># Linux/Mac: source .venv/bin/activate</span>
+
+<span class="cmd">python -m uvicorn backend.app.main:app</span> <span class="flag">--host 0.0.0.0 --port 8000</span></code></pre>
+
+<h4>Development Mode (auto-reload on file changes)</h4>
+<pre><code><span class="cmd">python -m uvicorn backend.app.main:app</span> <span class="flag">--host 0.0.0.0 --port 8000 --reload</span></code></pre>
+
+<p>You will see startup output similar to:</p>
+<pre><code><span class="comment">INFO:     Started server process [12345]
+INFO:     Waiting for application startup.
+INFO     qsat.main: Starting Q-SAT Adaptive Ground Station v0.1.0 in [simulation] mode
+INFO     qsat.main: Ground Station: Lat=10.7905, Lon=78.7047, Alt=80.0m
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)</span></code></pre>
+
+<div class="step-box ok">
+  <div class="step-header">
+    <div class="step-num" style="background:#22c55e">✓</div>
+    <div class="step-title">The backend is running when you see "Application startup complete"</div>
+  </div>
+  <p style="margin:0">Keep this terminal open. Press <strong>Ctrl + C</strong> to stop the server.</p>
+</div>
+
+<h3 class="sub-title">4b. Verify the Backend is Running</h3>
+
+<p>Open a new terminal (keep the server running) and test the API:</p>
+<pre><code><span class="comment"># Windows PowerShell</span>
+<span class="cmd">Invoke-WebRequest -Uri http://localhost:8000/ | Select-Object -ExpandProperty Content</span>
+
+<span class="comment"># Linux / macOS</span>
+<span class="cmd">curl http://localhost:8000/</span></code></pre>
+
+<p>Expected JSON response:</p>
+<pre><code>{"message": "Welcome to Q-SAT Adaptive Ground Station", "version": "0.1.0", "docs": "/docs"}</code></pre>
+
+<h3 class="sub-title">4c. Open the Web Dashboard &amp; API Docs</h3>
+
+<p>Open any modern web browser and navigate to these URLs:</p>
+
+<div class="url-box">🖥️ &nbsp; Mission Control Dashboard: &nbsp; <strong>http://localhost:8000/dashboard/</strong></div>
+<div class="url-box">📖 &nbsp; Interactive API Documentation (Swagger): &nbsp; <strong>http://localhost:8000/docs</strong></div>
+<div class="url-box">📖 &nbsp; Alternative API Docs (ReDoc): &nbsp; <strong>http://localhost:8000/redoc</strong></div>
+<div class="url-box">🔌 &nbsp; WebSocket live telemetry: &nbsp; <strong>ws://localhost:8000/ws/live</strong></div>
+
+<div class="step-box note" style="margin-top:12px;">
+  <div class="step-header">
+    <div class="step-num" style="background:#8b5cf6">ℹ</div>
+    <div class="step-title">Dashboard requires the Angular build (Step 6)</div>
+  </div>
+  <p style="margin:0">The dashboard is only available at <code>/dashboard/</code> if you completed the Angular production build in Step 6. If you skipped that step, use the dev server method described in Section 4d below.</p>
+</div>
+
+<h3 class="sub-title">4d. Run with Angular Dev Server (Development / Optional)</h3>
+
+<p>If you want hot-reload during frontend development, run the Angular dev server in a <strong>second terminal</strong> (keep the backend running in the first):</p>
+
+<pre><code><span class="comment"># In a NEW terminal window (backend stays running in the other)</span>
+<span class="cmd">cd frontend/qsat-dashboard</span>
+<span class="cmd">npm start</span>   <span class="comment"># runs: ng serve</span></code></pre>
+
+<p>Then open:</p>
+<div class="url-box">🖥️ &nbsp; Angular Dev Dashboard: &nbsp; <strong>http://localhost:4200</strong></div>
+
+<p>The Angular dev server proxies API calls to the backend on port 8000 automatically.</p>
+
+<hr>
+
+<!-- ════════════════════════════════════════════
+     SECTION 5 — EXPERIMENTS
+════════════════════════════════════════════ -->
+<div class="page-break"></div>
+<h2 class="section-title" id="sec5">5 · Running Experiments &amp; Benchmarks</h2>
+
+<p>Q-SAT includes 18 empirical benchmark experiments covering turbulence, elevation, distance, QBER, power, weather, AI adaptation, security, and statistical validation. Results are saved to <code>experiments/results/</code> and <code>results/</code>.</p>
+
+<h3 class="sub-title">Run All Experiments (Recommended)</h3>
+<pre><code><span class="comment"># Ensure venv is active and you are in the project root</span>
+<span class="cmd">python experiments/run_all.py</span></code></pre>
+
+<h3 class="sub-title">Run Individual Experiments</h3>
+<pre><code><span class="cmd">python experiments/exp01_baseline.py</span>        <span class="comment"># Baseline comparison</span>
+<span class="cmd">python experiments/exp02_turbulence.py</span>      <span class="comment"># Atmospheric turbulence sweep</span>
+<span class="cmd">python experiments/exp09_static_vs_ppo.py</span>   <span class="comment"># Static vs PPO benchmark</span>
+<span class="cmd">python experiments/exp12_ai_adaptation.py</span>   <span class="comment"># Multi-agent AI adaptation</span>
+<span class="cmd">python experiments/exp15_security.py</span>        <span class="comment"># Security anomaly detection</span>
+<span class="cmd">python experiments/exp17_statistics.py</span>      <span class="comment"># Monte Carlo statistical validation</span>
+<span class="cmd">python experiments/exp18_final_table.py</span>     <span class="comment"># Final benchmark summary table</span></code></pre>
+
+<h3 class="sub-title">Generate the Scientific Report</h3>
+<pre><code><span class="cmd">python experiments/generate_report.py</span></code></pre>
+<p>Output is written to <code>results/final_summary.md</code> and <code>results/final_results.csv</code>.</p>
+
+<h3 class="sub-title">Run Benchmarks Only (Fast)</h3>
+<pre><code><span class="cmd">python experiments/run_benchmarks.py</span></code></pre>
+
+<h3 class="sub-title">Experiment Results Summary</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Controller</th>
+      <th>Secret Key (kbits)</th>
+      <th>Mean SKR (kbps)</th>
+      <th>Mean QBER (%)</th>
+      <th>Uptime (%)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>MULTI_AGENT</strong> 🏆</td>
+      <td><strong>54.20 ± 1.50</strong></td>
+      <td><strong>0.284</strong></td>
+      <td><strong>4.76%</strong></td>
+      <td><strong>74.5%</strong></td>
+    </tr>
+    <tr>
+      <td>STATIC</td>
+      <td>10.70 ± 0.60</td>
+      <td>0.061</td>
+      <td>6.58%</td>
+      <td>46.6%</td>
+    </tr>
+    <tr>
+      <td>RULE_BASED</td>
+      <td>7.20 ± 8.40</td>
+      <td>0.114</td>
+      <td>5.36%</td>
+      <td>21.8%</td>
+    </tr>
+    <tr>
+      <td>PPO</td>
+      <td>0.00 ± 0.00</td>
+      <td>0.000</td>
+      <td>45.62%</td>
+      <td>0.0%</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr>
+
+<!-- ════════════════════════════════════════════
+     SECTION 6 — HARDWARE-IN-THE-LOOP
+════════════════════════════════════════════ -->
+<h2 class="section-title" id="sec6">6 · Hardware-in-the-Loop Mode (Optional)</h2>
+
+<p>In <strong>MQTT mode</strong>, the backend reads live environmental data from a physical ESP32 microcontroller via an MQTT broker instead of using the stochastic simulation.</p>
+
+<h3 class="sub-title">Step 1 — Start Eclipse Mosquitto MQTT Broker</h3>
+
+<h4>Using Docker (easiest)</h4>
+<pre><code><span class="cmd">docker run -d --name qsat-mosquitto -p 1883:1883 eclipse-mosquitto:2.0</span></code></pre>
+
+<h4>Native Windows install</h4>
+<p>Download the installer from <strong>mosquitto.org/download</strong>, install it, then start the service:</p>
+<pre><code><span class="cmd">net start mosquitto</span></code></pre>
+
+<h3 class="sub-title">Step 2 — Switch to MQTT Mode</h3>
+<p>Edit your <code>.env</code> file:</p>
+<pre><code>ENVIRONMENT_MODE=mqtt
+MQTT_BROKER=localhost
+MQTT_PORT=1883</code></pre>
+
+<h3 class="sub-title">Step 3 — Flash ESP32 Firmware</h3>
+<p>Follow the wiring and firmware guide in <code>docs/hardware_integration.md</code>. The ESP32 publishes JSON telemetry to the <code>qsat/environment</code> MQTT topic at 1 Hz.</p>
+
+<h3 class="sub-title">Step 4 — Run the Software Emulator (no physical hardware)</h3>
+<pre><code><span class="cmd">python hardware/esp32/emulator.py --broker localhost --profile nominal</span>
+<span class="comment"># Available profiles: nominal, storm, night, haze, clouds</span></code></pre>
+
+<h3 class="sub-title">Step 5 — Start the Backend</h3>
+<pre><code><span class="cmd">python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000</span></code></pre>
+<p>The status indicator in the dashboard will show <span class="pill pill-blue">HARDWARE</span> instead of <span class="pill pill-purple">SIMULATION</span>.</p>
+
+<hr>
+
+<!-- ════════════════════════════════════════════
+     SECTION 7 — DOCKER
+════════════════════════════════════════════ -->
+<div class="page-break"></div>
+<h2 class="section-title" id="sec7">7 · Docker Deployment (Optional)</h2>
+
+<p>Docker Compose runs the backend and MQTT broker in isolated containers. Requires Docker Desktop to be installed and running.</p>
+
+<h3 class="sub-title">Step 1 — Build the Angular Frontend First</h3>
+<pre><code><span class="cmd">cd frontend/qsat-dashboard</span>
+<span class="cmd">npm ci</span>
+<span class="cmd">npm run build</span>
+<span class="cmd">cd ../..</span></code></pre>
+
+<h3 class="sub-title">Step 2 — Create a Backend Dockerfile</h3>
+<p>Create the file <code>backend/Dockerfile</code> with the following content:</p>
+<pre><code>FROM python:3.12-slim
+
+WORKDIR /app
+COPY backend/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+EXPOSE 8000
+CMD ["python", "-m", "uvicorn", "backend.app.main:app", \
+     "--host", "0.0.0.0", "--port", "8000"]</code></pre>
+
+<h3 class="sub-title">Step 3 — Start All Services</h3>
+<pre><code><span class="cmd">docker-compose up --build</span>
+
+<span class="comment"># Run in background (detached mode)</span>
+<span class="cmd">docker-compose up --build -d</span></code></pre>
+
+<h3 class="sub-title">Step 4 — Stop All Services</h3>
+<pre><code><span class="cmd">docker-compose down</span></code></pre>
+
+<div class="step-box note">
+  <div class="step-header">
+    <div class="step-num" style="background:#8b5cf6">ℹ</div>
+    <div class="step-title">Docker exposes backend on port 8000</div>
+  </div>
+  <p style="margin:0">After <code>docker-compose up</code>, access the application at <code>http://localhost:8000/dashboard/</code> — the same URLs as the manual setup.</p>
+</div>
+
+<hr>
+
+<!-- ════════════════════════════════════════════
+     SECTION 8 — TESTS
+════════════════════════════════════════════ -->
+<h2 class="section-title" id="sec8">8 · Running the Test Suite</h2>
+
+<pre><code><span class="comment"># Run all tests with verbose output</span>
+<span class="cmd">pytest tests/ -v</span>
+
+<span class="comment"># Run with coverage report</span>
+<span class="cmd">pytest tests/ -v --tb=short</span>
+
+<span class="comment"># Run a specific test file</span>
+<span class="cmd">pytest tests/test_qkd.py -v</span></code></pre>
+
+<p>The test suite covers the QKD engine, atmospheric models, orbital mechanics, AI agents, and API endpoints.</p>
+
+<hr>
+
+<!-- ════════════════════════════════════════════
+     SECTION 9 — CONFIGURATION REFERENCE
+════════════════════════════════════════════ -->
+<h2 class="section-title" id="sec9">9 · Configuration Reference</h2>
+
+<p>All configuration is managed through the <code>.env</code> file in the project root. Key parameters:</p>
+
+<table>
+  <thead>
+    <tr><th>Parameter</th><th>Default</th><th>Type</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>ENVIRONMENT_MODE</code></td><td><code>simulation</code></td><td>string</td><td><code>simulation</code> or <code>mqtt</code></td></tr>
+    <tr><td><code>API_HOST</code></td><td><code>0.0.0.0</code></td><td>string</td><td>Server bind address</td></tr>
+    <tr><td><code>API_PORT</code></td><td><code>8000</code></td><td>int</td><td>Server listen port</td></tr>
+    <tr><td><code>DEBUG</code></td><td><code>false</code></td><td>bool</td><td>Enable auto-reload</td></tr>
+    <tr><td><code>GROUND_STATION_LAT</code></td><td><code>10.7905</code></td><td>float</td><td>Latitude °N</td></tr>
+    <tr><td><code>GROUND_STATION_LON</code></td><td><code>78.7047</code></td><td>float</td><td>Longitude °E</td></tr>
+    <tr><td><code>GROUND_STATION_ALT</code></td><td><code>80.0</code></td><td>float</td><td>Altitude (metres)</td></tr>
+    <tr><td><code>MIN_ELEVATION</code></td><td><code>10.0</code></td><td>float</td><td>Min link elevation angle (°)</td></tr>
+    <tr><td><code>SIMULATION_SPEED</code></td><td><code>1.0</code></td><td>float</td><td>Speed multiplier (0.1–100.0)</td></tr>
+    <tr><td><code>RANDOM_SEED</code></td><td><code>42</code></td><td>int</td><td>Reproducibility seed</td></tr>
+    <tr><td><code>MQTT_BROKER</code></td><td><code>localhost</code></td><td>string</td><td>MQTT broker hostname</td></tr>
+    <tr><td><code>MQTT_PORT</code></td><td><code>1883</code></td><td>int</td><td>MQTT broker port</td></tr>
+    <tr><td><code>QKD_DETECTOR_EFFICIENCY</code></td><td><code>0.10</code></td><td>float</td><td>SPAD detector η (10%)</td></tr>
+    <tr><td><code>BASE_QBER</code></td><td><code>0.01</code></td><td>float</td><td>Optical baseline QBER (1%)</td></tr>
+    <tr><td><code>MAX_TRANSMISSION_POWER</code></td><td><code>100.0</code></td><td>float</td><td>Max laser power (mW scale)</td></tr>
+    <tr><td><code>DATABASE_URL</code></td><td><code>sqlite:///./qsat.db</code></td><td>string</td><td>SQLAlchemy database URL</td></tr>
+  </tbody>
+</table>
+
+<hr>
+
+<!-- ════════════════════════════════════════════
+     SECTION 10 — TROUBLESHOOTING
+════════════════════════════════════════════ -->
+<div class="page-break"></div>
+<h2 class="section-title" id="sec10">10 · Troubleshooting</h2>
+
+<div class="step-grid">
+
+<div class="step-box danger">
+  <div class="step-header">
+    <div class="step-num">✗</div>
+    <div class="step-title">Error: "python is not recognized" / "python3: command not found"</div>
+  </div>
+  <p><strong>Cause:</strong> Python was not added to PATH during installation.</p>
+  <p><strong>Fix (Windows):</strong> Re-run the Python installer, choose "Modify", and check "Add Python to PATH". Or manually add <code>C:\Users\YourName\AppData\Local\Programs\Python\Python312\</code> to your PATH environment variable.</p>
+  <p><strong>Fix (Linux):</strong> Use <code>python3.12</code> explicitly, or add an alias: <code>alias python=python3.12</code></p>
+</div>
+
+<div class="step-box danger">
+  <div class="step-header">
+    <div class="step-num">✗</div>
+    <div class="step-title">pip install fails: "Could not build wheels for ..."</div>
+  </div>
+  <p><strong>Cause:</strong> Missing C++ build tools for compiling native extensions.</p>
+  <p><strong>Fix (Windows):</strong> Install <a href="https://visualstudio.microsoft.com/visual-cpp-build-tools/">Microsoft C++ Build Tools</a> — select "Desktop development with C++".</p>
+  <p><strong>Fix (Linux):</strong></p>
+  <pre style="margin:4px 0"><code><span class="cmd">sudo apt install -y build-essential python3.12-dev</span></code></pre>
+</div>
+
+<div class="step-box danger">
+  <div class="step-header">
+    <div class="step-num">✗</div>
+    <div class="step-title">PowerShell: "cannot be loaded because running scripts is disabled"</div>
+  </div>
+  <p><strong>Cause:</strong> Windows execution policy blocks .ps1 scripts.</p>
+  <pre style="margin:4px 0"><code><span class="cmd">Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser</span></code></pre>
+  <p>Then re-run <code>.\.venv\Scripts\Activate.ps1</code>.</p>
+</div>
+
+<div class="step-box danger">
+  <div class="step-header">
+    <div class="step-num">✗</div>
+    <div class="step-title">Port 8000 is already in use</div>
+  </div>
+  <p><strong>Fix:</strong> Either stop the process using port 8000, or change <code>API_PORT</code> in your <code>.env</code> file to another value (e.g., <code>8001</code>), then restart.</p>
+  <pre style="margin:4px 0"><code><span class="comment"># Find what's using port 8000 (Windows)</span>
+<span class="cmd">netstat -ano | findstr :8000</span>
+<span class="comment"># Linux / macOS</span>
+<span class="cmd">lsof -i :8000</span></code></pre>
+</div>
+
+<div class="step-box danger">
+  <div class="step-header">
+    <div class="step-num">✗</div>
+    <div class="step-title">Dashboard shows "404 Not Found" at /dashboard/</div>
+  </div>
+  <p><strong>Cause:</strong> The Angular build was not run (Step 6 was skipped), so the <code>dist/</code> folder doesn't exist.</p>
+  <p><strong>Fix:</strong></p>
+  <pre style="margin:4px 0"><code><span class="cmd">cd frontend/qsat-dashboard</span>
+<span class="cmd">npm ci</span>
+<span class="cmd">npm run build</span>
+<span class="cmd">cd ../..</span></code></pre>
+  <p>Then restart the backend server.</p>
+</div>
+
+<div class="step-box danger">
+  <div class="step-header">
+    <div class="step-num">✗</div>
+    <div class="step-title">npm error: "node_modules" not found / Angular CLI not found</div>
+  </div>
+  <p><strong>Cause:</strong> Dependencies haven't been installed yet.</p>
+  <pre style="margin:4px 0"><code><span class="cmd">cd frontend/qsat-dashboard</span>
+<span class="cmd">npm ci</span>   <span class="comment"># or: npm install</span></code></pre>
+</div>
+
+<div class="step-box danger">
+  <div class="step-header">
+    <div class="step-num">✗</div>
+    <div class="step-title">ModuleNotFoundError: No module named 'backend'</div>
+  </div>
+  <p><strong>Cause:</strong> The backend is being run from the wrong directory, or the venv is not active.</p>
+  <p><strong>Fix:</strong> Always run uvicorn from the <strong>project root directory</strong> (not from inside <code>backend/</code>), with the venv active.</p>
+  <pre style="margin:4px 0"><code><span class="comment"># CORRECT — from project root</span>
+<span class="cmd">python -m uvicorn backend.app.main:app --port 8000</span></code></pre>
+</div>
+
+<div class="step-box warn">
+  <div class="step-header">
+    <div class="step-num">!</div>
+    <div class="step-title">PyTorch install is slow or times out</div>
+  </div>
+  <p>PyTorch is a large package (~2.5 GB). If the download times out, retry the install:</p>
+  <pre style="margin:4px 0"><code><span class="cmd">pip install -r backend/requirements.txt --timeout 120</span></code></pre>
+  <p>Or install CPU-only torch first to reduce download size:</p>
+  <pre style="margin:4px 0"><code><span class="cmd">pip install torch --index-url https://download.pytorch.org/whl/cpu</span></code></pre>
+</div>
+
+</div><!-- end step-grid -->
+
+<hr>
+
+<!-- ════════════════════════════════════════════
+     SECTION 11 — QUICK REFERENCE CARD
+════════════════════════════════════════════ -->
+<div class="page-break"></div>
+<h2 class="section-title" id="sec11">11 · Quick Reference Card</h2>
+
+<p>Once installed, use these commands day-to-day. Run all commands from the <strong>project root</strong> with the venv active.</p>
+
+<h3 class="sub-title">Activate Virtual Environment</h3>
+<pre><code><span class="comment"># Windows PowerShell</span>
+<span class="cmd">.\.venv\Scripts\Activate.ps1</span>
+
+<span class="comment"># Linux / macOS</span>
+<span class="cmd">source .venv/bin/activate</span></code></pre>
+
+<h3 class="sub-title">Start the Application</h3>
+<pre><code><span class="comment"># Start backend (production)</span>
+<span class="cmd">python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000</span>
+
+<span class="comment"># Start backend (development, auto-reload)</span>
+<span class="cmd">python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload</span>
+
+<span class="comment"># Start Angular dev server (second terminal, optional)</span>
+<span class="cmd">cd frontend/qsat-dashboard  &amp;&amp;  npm start</span></code></pre>
+
+<h3 class="sub-title">Access URLs</h3>
+<table>
+  <thead><tr><th>URL</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>http://localhost:8000/dashboard/</code></td><td>Mission Control web dashboard</td></tr>
+    <tr><td><code>http://localhost:8000/docs</code></td><td>Swagger interactive API docs</td></tr>
+    <tr><td><code>http://localhost:8000/redoc</code></td><td>ReDoc API documentation</td></tr>
+    <tr><td><code>http://localhost:8000/api/system/status</code></td><td>System health check (JSON)</td></tr>
+    <tr><td><code>ws://localhost:8000/ws/live</code></td><td>Real-time telemetry WebSocket</td></tr>
+    <tr><td><code>http://localhost:4200</code></td><td>Angular dev server (if running)</td></tr>
+  </tbody>
+</table>
+
+<h3 class="sub-title">Rebuild Frontend (after code changes)</h3>
+<pre><code><span class="cmd">cd frontend/qsat-dashboard  &amp;&amp;  npm run build  &amp;&amp;  cd ../..</span></code></pre>
+
+<h3 class="sub-title">Run Experiments</h3>
+<pre><code><span class="cmd">python experiments/run_all.py</span>            <span class="comment"># All 18 experiments</span>
+<span class="cmd">python experiments/run_benchmarks.py</span>     <span class="comment"># Benchmarks only</span>
+<span class="cmd">python experiments/generate_report.py</span>    <span class="comment"># Generate scientific report</span></code></pre>
+
+<h3 class="sub-title">Run Tests</h3>
+<pre><code><span class="cmd">pytest tests/ -v</span></code></pre>
+
+<h3 class="sub-title">Pre-flight Checklist</h3>
+<ul class="checklist">
+  <li>Python 3.12+ installed and available in PATH</li>
+  <li>Node.js 20 LTS installed and available in PATH</li>
+  <li>Virtual environment created (<code>.venv/</code>)</li>
+  <li>Virtual environment activated (prompt shows <code>(.venv)</code>)</li>
+  <li>Python dependencies installed (<code>pip install -r backend/requirements.txt</code>)</li>
+  <li>Node.js dependencies installed (<code>npm ci</code> in <code>frontend/qsat-dashboard/</code>)</li>
+  <li>Angular frontend built (<code>npm run build</code>)</li>
+  <li><code>.env</code> file created (copied from <code>.env.example</code>)</li>
+  <li>Port 8000 is free</li>
+</ul>
+
+<hr>
+
+<!-- ════════════════════════════════════════════
+     FOOTER
+════════════════════════════════════════════ -->
+<div class="footer">
+  <strong>Q-SAT Adaptive Ground Station</strong> · Version 0.1.0 · Installation &amp; Run Guide
+  <br>Ground Station Reference: OGS–Bob · NIT Trichy, Tamil Nadu, India · 10.7905°N, 78.7047°E
+  <br>For technical documentation see the <code>docs/</code> directory. API reference at <code>http://localhost:8000/docs</code>.
+</div>
+
+</body>
+</html>

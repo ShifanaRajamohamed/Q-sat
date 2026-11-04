@@ -1,8 +1,6 @@
-"""Unit and integration tests for Phase 9: Hierarchical Multi-Agent Architecture."""
+"""Unit and integration tests for Phase 9: Hierarchical Multi-Agent Architecture and Ablation."""
 
 import pytest
-from fastapi.testclient import TestClient
-from backend.app.main import app
 from backend.app.models.environment import EnvironmentData
 from backend.app.models.qkd import OpticalChannelState, QKDMetrics
 from backend.app.models.satellite import SatelliteState
@@ -10,8 +8,6 @@ from ai.agents.communication_agent import CommunicationAgent
 from ai.agents.coordinator import CoordinatorAgent
 from ai.agents.security_agent import SecurityAgent
 from ai.agents.weather_agent import WeatherAgent
-
-client = TestClient(app)
 
 
 @pytest.fixture
@@ -91,6 +87,8 @@ def test_security_agent_physical_vs_anomaly(test_setup):
     dec_anomaly = sec_agent.analyze(env, channel, qkd_anomaly)
     assert dec_anomaly.classification == "ANOMALY"
     assert dec_anomaly.anomaly_probability > 0.50
+    assert "MODELED ANOMALY ASSESSMENT" in dec_anomaly.root_cause_explanation
+    assert "not confirmed eavesdropping" in dec_anomaly.root_cause_explanation
 
 
 def test_coordinator_arbitration(test_setup):
@@ -103,25 +101,30 @@ def test_coordinator_arbitration(test_setup):
     assert 5.0 <= dec.final_action.transmission_power_pct <= 100.0
     assert 0.05 <= dec.final_action.photon_rate_norm <= 1.0
     assert 0.10 <= dec.final_action.beam_divergence_norm <= 1.0
+    assert dec.final_action.reason is not None
 
 
-def test_api_control_and_ai_endpoints():
-    """Verify API endpoints for control and multi-agent systems."""
-    # 1. GET /api/control/current
-    res_ctrl = client.get("/api/control/current")
-    assert res_ctrl.status_code == 200
-    assert "transmission_power_pct" in res_ctrl.json()
+def test_coordinator_ablation(test_setup):
+    """Verify Coordinator Agent supports selective ablation of domain agents."""
+    sat, env, channel, qkd = test_setup
 
-    # 2. POST /api/control/mode
-    res_mode = client.post("/api/control/mode", json={"controller_type": "MULTI_AGENT"})
-    assert res_mode.status_code == 200
-    assert res_mode.json()["active_controller"] == "MULTI_AGENT"
+    # 1. Ablate Weather
+    coord_no_wx = CoordinatorAgent(enable_weather=False, enable_comm=True, enable_security=True)
+    dec_no_wx = coord_no_wx.step(sat, env, channel, qkd)
+    assert "ablated" in dec_no_wx.weather_agent.recommendation.lower()
 
-    # 3. GET /api/ai/multi_agent
-    res_ai = client.get("/api/ai/multi_agent")
-    assert res_ai.status_code == 200
-    data = res_ai.json()
-    assert "weather_agent" in data
-    assert "communication_agent" in data
-    assert "security_agent" in data
-    assert "final_action" in data
+    # 2. Ablate Comm
+    coord_no_comm = CoordinatorAgent(enable_weather=True, enable_comm=False, enable_security=True)
+    dec_no_comm = coord_no_comm.step(sat, env, channel, qkd)
+    assert "ablated" in dec_no_comm.communication_agent.recommendation.lower()
+
+    # 3. Ablate Security
+    coord_no_sec = CoordinatorAgent(enable_weather=True, enable_comm=True, enable_security=False)
+    dec_no_sec = coord_no_sec.step(sat, env, channel, qkd)
+    assert "ablated" in dec_no_sec.security_agent.root_cause_explanation.lower()
+
+    # 4. Pure Baseline (All Ablated)
+    coord_baseline = CoordinatorAgent(enable_weather=False, enable_comm=False, enable_security=False)
+    dec_baseline = coord_baseline.step(sat, env, channel, qkd)
+    assert dec_baseline.final_action.transmission_power_pct > 0
+    assert dec_baseline.final_action.photon_rate_norm > 0

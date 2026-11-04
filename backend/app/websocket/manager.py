@@ -25,20 +25,30 @@ class ConnectionManager:
         self.stream_interval_s = 0.80  # Push updates every ~800 ms
 
     async def connect(self, websocket: WebSocket):
-        """Accept new client WebSocket connection."""
+        """Accept new client WebSocket connection and start broadcaster if first client."""
         await websocket.accept()
         self.active_connections.append(websocket)
         logger.info("WebSocket client connected. Total active: %d", len(self.active_connections))
+
+        # Start broadcaster background loop on demand if not already running
+        if self._broadcast_task is None or self._broadcast_task.done():
+            self.is_running = True
+            self._broadcast_task = asyncio.create_task(self.broadcast_telemetry())
 
         # Send immediate initial telemetry snapshot
         snapshot = self.build_telemetry_packet()
         await websocket.send_text(json.dumps(snapshot))
 
     def disconnect(self, websocket: WebSocket):
-        """Handle client disconnection."""
+        """Handle client disconnection and stop broadcaster when no clients remain."""
         if websocket in self.active_connections:
             self.active_connections.remove(websocket)
             logger.info("WebSocket client disconnected. Total active: %d", len(self.active_connections))
+
+        if not self.active_connections and self._broadcast_task and not self._broadcast_task.done():
+            self.is_running = False
+            self._broadcast_task.cancel()
+            self._broadcast_task = None
 
     def build_telemetry_packet(self) -> dict:
         """Assemble cohesive real-time telemetry payload covering all subsystems."""
@@ -53,6 +63,7 @@ class ConnectionManager:
 
         packet = {
             "timestamp": sat_state.timestamp,
+            "environment_mode": environment_service.mode,
             "satellite": sat_state.model_dump(),
             "environment": env_state.model_dump(),
             "channel": channel_state.model_dump() if channel_state else None,

@@ -19,15 +19,16 @@ class Settings(BaseSettings):
 
     # System Identification
     SYSTEM_NAME: str = "Q-SAT Adaptive Ground Station"
-    VERSION: str = "0.1.0"
-    ENVIRONMENT_MODE: Literal["simulation", "mqtt"] = "simulation"
+    VERSION: str = "0.2.0"
+    ENVIRONMENT_MODE: Literal["simulation", "mqtt", "historical_replay"] = "simulation"
 
     # API Server Configuration
     API_HOST: str = "0.0.0.0"
     API_PORT: int = 8000
     DEBUG: bool = False
 
-    # Ground Station Coordinates (Default: NIT Trichy / Regional reference)
+    # Ground Station Coordinates (Tiruchirappalli reference ground station)
+    GROUND_STATION_NAME: str = Field(default="Tiruchirappalli reference ground station", description="Reference station naming")
     GROUND_STATION_LAT: float = Field(default=10.7905, description="Latitude in degrees North")
     GROUND_STATION_LON: float = Field(default=78.7047, description="Longitude in degrees East")
     GROUND_STATION_ALT: float = Field(default=80.0, description="Altitude in meters above sea level")
@@ -36,7 +37,12 @@ class Settings(BaseSettings):
     # Simulation Dynamics
     SIMULATION_SPEED: float = Field(default=1.0, ge=0.1, le=100.0, description="Simulation speed multiplier")
     SIMULATION_TIME_STEP: float = Field(default=1.0, description="Base time step in seconds")
+    DEFAULT_PASS_DURATION_S: float = Field(default=300.0, description="Standard benchmark pass duration in seconds")
     RANDOM_SEED: int = Field(default=42, description="Seed for deterministic reproducibility")
+    HISTORICAL_WEATHER_CSV: str = Field(
+        default="simulation/historical_weather/tiruchirappalli_20240301_20240331_era5.csv",
+        description="Path to active historical weather CSV dataset"
+    )
 
     # MQTT Broker Configuration
     MQTT_BROKER: str = "localhost"
@@ -49,24 +55,49 @@ class Settings(BaseSettings):
     MQTT_TOPIC_ALERTS: str = "qsat/alerts"
 
     # Optical & Quantum Channel Parameters (BB84 Model Defaults)
+    RECEIVER_APERTURE_M: float = Field(default=1.0, description="Ground station telescope aperture diameter in meters")
+    OPTICAL_WAVELENGTH_NM: float = Field(default=850.0, description="Communication wavelength in nm")
     QKD_DETECTOR_EFFICIENCY: float = Field(default=0.10, description="Single photon detector quantum efficiency (eta_det)")
     DARK_COUNT_RATE: float = Field(default=1e-5, description="Detector dark count probability per pulse")
-    BASE_QBER: float = Field(default=0.01, description="Intrinsic optical baseline error rate (1%)")
+    BASE_QBER: float = Field(default=0.01, description="Intrinsic optical baseline error rate (fraction: 0.01 = 1%)")
     BASIS_MATCHING_PROBABILITY: float = Field(default=0.50, description="BB84 basis reconciliation probability")
     ERROR_CORRECTION_EFFICIENCY: float = Field(default=1.16, description="f(e) bidirectional error correction efficiency")
-    OPTICAL_WAVELENGTH_NM: float = Field(default=850.0, description="Communication wavelength in nm")
+    QBER_SECURITY_THRESHOLD: float = Field(default=0.110, description="Theoretical BB84 cutoff threshold (11%)")
 
-    # Actuator & Control Constraints
-    MAX_TRANSMISSION_POWER: float = Field(default=100.0, description="Max laser power (mW or % scale)")
-    MIN_TRANSMISSION_POWER: float = Field(default=5.0, description="Min laser power")
+    # Physical Actuator & Power Constraints
+    MAX_TRANSMISSION_POWER: float = Field(default=100.0, description="Max laser power percentage scale (100.0%)")
+    MIN_TRANSMISSION_POWER: float = Field(default=5.0, description="Min laser power percentage scale (5.0%)")
+    MAX_OPTICAL_POWER_MW: float = Field(default=50.0, description="Physical optical laser power at 100% actuation (mW)")
+    WALL_PLUG_EFFICIENCY: float = Field(default=0.15, description="Transmitter wall-plug electrical-to-optical conversion efficiency")
+
     MAX_PHOTON_RATE: float = Field(default=1.0, description="Normalized photon rate ceiling [0.0, 1.0]")
     MIN_PHOTON_RATE: float = Field(default=0.05, description="Normalized photon rate floor [0.0, 1.0]")
     MAX_BEAM_DIVERGENCE: float = Field(default=1.0, description="Normalized beam divergence ceiling [0.0, 1.0]")
-    MIN_BEAM_DIVERGENCE: float = Field(default=0.1, description="Normalized beam divergence floor [0.0, 1.0]")
-    MAX_RATE_OF_CHANGE: float = Field(default=0.20, description="Maximum control adjustment allowed per step")
+    MIN_BEAM_DIVERGENCE: float = Field(default=0.10, description="Normalized beam divergence floor [0.0, 1.0]")
+    MAX_RATE_OF_CHANGE: float = Field(default=0.20, description="Maximum control adjustment allowed per step (20%)")
 
     # Database
     DATABASE_URL: str = "sqlite:///./qsat.db"
+
+    # Energy calculations
+    def power_pct_to_optical_w(self, power_pct: float) -> float:
+        """Convert transmission power percentage to physical optical power in Watts."""
+        pct_clamped = max(0.0, min(100.0, power_pct))
+        return (pct_clamped / 100.0) * (self.MAX_OPTICAL_POWER_MW / 1000.0)
+
+    def power_pct_to_electrical_w(self, power_pct: float) -> float:
+        """Convert transmission power percentage to wall-plug electrical power in Watts."""
+        optical_w = self.power_pct_to_optical_w(power_pct)
+        eff = max(0.01, self.WALL_PLUG_EFFICIENCY)
+        return optical_w / eff
+
+    def calculate_energy_joules(self, power_pct: float, dt: float) -> float:
+        """Compute integrated physical electrical energy consumption in Joules: P_elec (W) * dt (s)."""
+        return self.power_pct_to_electrical_w(power_pct) * dt
+
+    def calculate_energy_proxy(self, power_pct: float, dt: float) -> float:
+        """Compute dimensionless energy proxy (%·s) when physical model is not applied."""
+        return float(power_pct * dt)
 
 
 settings = Settings()

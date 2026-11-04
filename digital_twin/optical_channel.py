@@ -20,14 +20,15 @@ class OpticalChannelModel:
 
     def __init__(
         self,
-        receiver_aperture_m: float = 1.0,       # Ground station telescope mirror diameter (1.0 meter)
+        receiver_aperture_m: Optional[float] = None,       # Ground station telescope mirror diameter (meters)
         min_divergence_urad: float = 10.0,      # Minimum diffraction-limited divergence half-angle (10 microradians)
         max_divergence_urad: float = 100.0,     # Maximum expanded divergence half-angle (100 microradians)
         optical_efficiency_rx: float = 0.65,    # Telescope optics and coupling transmission efficiency
         vibration_jitter_coeff: float = 25.0,   # Micro-radians of pointing jitter per 1.0 g of vibration
         stray_light_coeff: float = 0.15         # Noise counts per sec per lux (with sub-nanometer spectral bandpass filter)
     ):
-        self.receiver_aperture_radius_m = receiver_aperture_m / 2.0
+        eff_aperture = receiver_aperture_m if receiver_aperture_m is not None else settings.RECEIVER_APERTURE_M
+        self.receiver_aperture_radius_m = eff_aperture / 2.0
         self.min_divergence_urad = min_divergence_urad
         self.max_divergence_urad = max_divergence_urad
         self.optical_efficiency_rx = optical_efficiency_rx

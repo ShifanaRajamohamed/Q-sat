@@ -1,0 +1,58 @@
+{
+    "dataset_name": "Tiruchirappalli March 2024 Weather Synthetic Fixture",
+    "location_name": "Tiruchirappalli reference ground station",
+    "latitude": 10.7905,
+    "longitude": 78.7047,
+    "altitude_m": 80.0,
+    "start_time_iso": "2024-03-01T00:00:00Z",
+    "end_time_iso": "2024-03-31T23:00:00Z",
+    "total_records": 744,
+    "temporal_resolution": "1 hour",
+    "provenance": "SYNTHETIC_RESEARCH_FIXTURE",
+    "is_synthetic": true,
+    "generation_timestamp_iso": "2026-11-03T16:47:35.229905+00:00",
+    "fields": {
+        "timestamp": {
+            "unit": "ISO 8601 UTC string",
+            "provenance": "GENERATED_TIMESTAMPS"
+        },
+        "temperature_c": {
+            "unit": "deg C",
+            "provenance": "SYNTHETIC_DIURNAL_MODEL"
+        },
+        "relative_humidity_pct": {
+            "unit": "%",
+            "provenance": "SYNTHETIC_DIURNAL_MODEL"
+        },
+        "cloud_cover_pct": {
+            "unit": "%",
+            "provenance": "SYNTHETIC_METEOROLOGICAL_CLOUD"
+        },
+        "wind_speed_m_s": {
+            "unit": "m/s",
+            "provenance": "SYNTHETIC_BREEZE_MODEL"
+        },
+        "shortwave_radiation_w_m2": {
+            "unit": "W/m^2",
+            "provenance": "SOLAR_ZENITH_CALCULATED"
+        },
+        "surface_pressure_hpa": {
+            "unit": "hPa",
+            "provenance": "SYNTHETIC_TROPICAL_BAROMETRIC"
+        }
+    },
+    "missing_optical_channel_inputs": {
+        "turbulence": {
+            "treatment": "CONFIGURED_ASSUMPTION",
+            "default": 0.12
+        },
+        "vibration": {
+            "treatment": "CONFIGURED_ASSUMPTION",
+            "default": 0.015
+        },
+        "ambient_light": {
+            "treatment": "SOLAR_GEOMETRY_AND_RADIATION_MODELED",
+            "default_conversion": "shortwave_w_m2 * 115 lux/(W/m2)"
+        }
+    }
+}

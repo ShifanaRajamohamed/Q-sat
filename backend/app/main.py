@@ -33,14 +33,17 @@ logger = logging.getLogger("qsat.main")
 async def lifespan(app: FastAPI):
     """Application lifespan lifecycle manager."""
     logger.info("Starting %s v%s in [%s] mode", settings.SYSTEM_NAME, settings.VERSION, settings.ENVIRONMENT_MODE)
-    logger.info("Ground Station: Lat=%.4f, Lon=%.4f, Alt=%.1fm",
-                settings.GROUND_STATION_LAT, settings.GROUND_STATION_LON, settings.GROUND_STATION_ALT)
-    
-    # Start live telemetry broadcast background task
-    broadcast_task = asyncio.create_task(ws_manager.broadcast_telemetry())
+    logger.info("Ground Station: Lat=%.4f, Lon=%.4f, Alt=%.1fm (%s)",
+                settings.GROUND_STATION_LAT, settings.GROUND_STATION_LON, settings.GROUND_STATION_ALT, settings.GROUND_STATION_NAME)
     yield
-    # Graceful shutdown
-    broadcast_task.cancel()
+    # Graceful shutdown of websocket broadcaster if running
+    if ws_manager._broadcast_task and not ws_manager._broadcast_task.done():
+        ws_manager.is_running = False
+        ws_manager._broadcast_task.cancel()
+        try:
+            await ws_manager._broadcast_task
+        except asyncio.CancelledError:
+            pass
     logger.info("Shutting down %s", settings.SYSTEM_NAME)
 
 

@@ -163,6 +163,29 @@ export class TelemetryService {
   public runDemonstration(): Observable<any> {
     return this.http.post(`${this.apiBase}/api/experiments/run-demo`, {});
   }
+
+  // Historical Weather Replay REST API Actions
+  public getHistoricalFiles(): Observable<any> {
+    return this.http.get(`${this.apiBase}/api/environment/historical/files`);
+  }
+
+  public configureHistoricalReplay(config: {
+    csv_file: string;
+    start_datetime_iso?: string;
+    interpolation_mode: string;
+    assumed_turbulence?: number;
+    assumed_vibration_g?: number;
+  }): Observable<any> {
+    return this.http.post(`${this.apiBase}/api/environment/historical/configure`, config);
+  }
+
+  public getHistoricalStatus(): Observable<any> {
+    return this.http.get(`${this.apiBase}/api/environment/historical/status`);
+  }
+
+  public switchEnvironmentMode(mode: 'simulation' | 'mqtt' | 'historical_replay'): Observable<any> {
+    return this.http.post(`${this.apiBase}/api/environment/mode`, { mode });
+  }
 }
 
 

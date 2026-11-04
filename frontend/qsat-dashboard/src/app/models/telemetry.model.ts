@@ -12,6 +12,11 @@ export interface SatelliteTelemetry {
   link_status?: string;
   time_to_los_s?: number;
   time_to_aos_s?: number | null;
+  is_orbital_prediction?: boolean;
+  orbital_source?: string;
+  orbital_epoch?: string;
+  epoch_warning?: string;
+  retrieval_timestamp?: string;
 }
 
 export interface EnvironmentTelemetry {
@@ -21,9 +26,16 @@ export interface EnvironmentTelemetry {
   vibration: number;
   cloud_factor: number;
   turbulence: number;
-  data_source: 'SIMULATION' | 'HARDWARE';
+  data_source: 'SIMULATION' | 'HARDWARE' | 'HISTORICAL_REPLAY' | string;
   scenario_name: string;
   timestamp: number;
+  cloud_cover_pct?: number;
+  meteorological_cloud_cover_pct?: number;
+  wind_speed_m_s?: number;
+  datetime_iso?: string;
+  is_interpolated?: boolean;
+  interpolation_method?: string;
+  field_provenance?: Record<string, string>;
 }
 
 export interface OpticalChannelTelemetry {
@@ -70,6 +82,10 @@ export interface ControlTelemetry {
     photon_rate_norm: number;
     beam_divergence_norm: number;
     controller_type: string;
+    requested_controller?: string;
+    actual_controller?: string;
+    model_loaded?: boolean;
+    fallback_reason?: string;
     reason?: string;
   };
   delta?: {
@@ -79,6 +95,10 @@ export interface ControlTelemetry {
     controller_type?: string;
   };
   mode: 'STATIC' | 'RULE_BASED' | 'PPO' | 'MULTI_AGENT';
+  requested_controller?: string;
+  actual_controller?: string;
+  model_loaded?: boolean;
+  fallback_reason?: string;
 }
 
 export interface MultiAgentTelemetry {
@@ -125,6 +145,7 @@ export interface AlertItem {
 
 export interface TelemetryPacket {
   timestamp: number;
+  environment_mode?: string;
   satellite: SatelliteTelemetry;
   environment: EnvironmentTelemetry;
   channel?: OpticalChannelTelemetry;

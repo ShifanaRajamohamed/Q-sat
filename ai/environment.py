@@ -15,6 +15,7 @@ from digital_twin.satellite_model import SatelliteModel
 from digital_twin.simulation_environment_provider import SimulationEnvironmentProvider
 from qkd.qkd_simulator import QKDSimulator
 from ai.reward import RewardBreakdown, calculate_reward
+from ai.spaces import apply_action_deltas, build_normalized_observation
 
 
 class QSATEnvironment(gym.Env):
@@ -140,24 +141,14 @@ class QSATEnvironment(gym.Env):
         action = np.clip(action, -1.0, 1.0)
         rate_limit = settings.MAX_RATE_OF_CHANGE  # 0.20
 
-        # Map actions to actuator parameter deltas
-        delta_p = float(action[0] * (rate_limit * 100.0))  # Power delta [-20%, +20%]
-        delta_r = float(action[1] * rate_limit)            # Photon rate delta [-0.20, +0.20]
-        delta_d = float(action[2] * rate_limit)            # Divergence delta [-0.20, +0.20]
-
-        # Apply deltas with hardware physical clamps
-        self.power_pct = float(np.clip(
-            self.power_pct + delta_p,
-            settings.MIN_TRANSMISSION_POWER, settings.MAX_TRANSMISSION_POWER
-        ))
-        self.photon_rate_norm = float(np.clip(
-            self.photon_rate_norm + delta_r,
-            settings.MIN_PHOTON_RATE, settings.MAX_PHOTON_RATE
-        ))
-        self.beam_divergence_norm = float(np.clip(
-            self.beam_divergence_norm + delta_d,
-            settings.MIN_BEAM_DIVERGENCE, settings.MAX_BEAM_DIVERGENCE
-        ))
+        # Map actions to actuator parameter deltas and update physical clamps
+        self.power_pct, self.photon_rate_norm, self.beam_divergence_norm, delta_p, delta_r, delta_d = apply_action_deltas(
+            action=action,
+            current_power_pct=self.power_pct,
+            current_photon_rate_norm=self.photon_rate_norm,
+            current_beam_divergence_norm=self.beam_divergence_norm,
+            rate_limit=rate_limit
+        )
 
         # Advance digital twin physics
         self.current_step += 1
@@ -205,29 +196,16 @@ class QSATEnvironment(gym.Env):
         return obs, reward, terminated, truncated, info
 
     def _build_observation(self) -> np.ndarray:
-        """Construct normalized 15-dimensional observation array."""
-        elev_norm = max(0.0, min(1.0, (self.latest_sat.elevation_deg + 10.0) / 100.0))
-        range_norm = max(0.0, min(1.0, self.latest_sat.slant_range_km / 2000.0))
-        temp_norm = max(0.0, min(1.0, (self.latest_env.temperature + 20.0) / 70.0))
-        hum_norm = self.latest_env.humidity / 100.0
-        light_norm = max(0.0, min(1.0, self.latest_env.ambient_light / 100000.0))
-        vib_norm = max(0.0, min(1.0, self.latest_env.vibration / 2.0))
-        cloud_norm = self.latest_env.cloud_factor
-        turb_norm = self.latest_env.turbulence
-        loss_norm = max(0.0, min(1.0, self.latest_channel.total_loss_db / 60.0))
-        qber_norm = max(0.0, min(1.0, self.latest_qkd.qber / 0.50))
-        skr_norm = max(0.0, min(1.0, self.latest_qkd.secret_key_rate / 30000.0))
-        rx_norm = max(0.0, min(1.0, self.latest_channel.received_photon_rate / 500000.0))
-        pwr_norm = self.power_pct / 100.0
-        rate_norm = self.photon_rate_norm
-        div_norm = self.beam_divergence_norm
-
-        obs = np.array([
-            elev_norm, range_norm, temp_norm, hum_norm, light_norm,
-            vib_norm, cloud_norm, turb_norm, loss_norm, qber_norm,
-            skr_norm, rx_norm, pwr_norm, rate_norm, div_norm
-        ], dtype=np.float32)
-        return obs
+        """Construct normalized 15-dimensional observation array using shared spaces module."""
+        return build_normalized_observation(
+            satellite=self.latest_sat,
+            environment=self.latest_env,
+            channel=self.latest_channel,
+            qkd=self.latest_qkd,
+            current_power_pct=self.power_pct,
+            current_photon_rate_norm=self.photon_rate_norm,
+            current_beam_divergence_norm=self.beam_divergence_norm
+        )
 
     def render(self):
         """Print human-readable telemetry frame."""

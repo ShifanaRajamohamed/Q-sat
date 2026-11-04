@@ -43,6 +43,21 @@ export class App implements OnInit, OnDestroy, AfterViewInit {
   public selectedDatasetData: any = null;
   public isLoadingDataset: boolean = false;
 
+  // Environment Mode & Historical Replay State
+  public environmentMode: 'simulation' | 'historical_replay' | 'mqtt' = 'simulation';
+  public availableHistoricalFiles: string[] = [
+    'tiruchirappalli_20240301_20240331_era5.csv',
+    'tiruchirappalli_20240301_20240331_best_match.csv',
+    'tiruchirappalli_2024_03_synthetic_fixture.csv'
+  ];
+  public selectedHistoricalFile: string = 'tiruchirappalli_20240301_20240331_era5.csv';
+  public historicalStartDatetime: string = '2024-03-02T18:00:00Z';
+  public historicalInterpolationMode: 'HOLD' | 'LINEAR' = 'LINEAR';
+  public historicalAssumedTurbulence: number = 0.12;
+  public historicalAssumedVibration: number = 0.015;
+  public historicalStatus: any = null;
+  public showHistoricalPanel: boolean = false;
+
   // Live Mission Activity Log & Telemetry Message Stream
   public missionLogs: Array<{
     id: number;
@@ -52,39 +67,39 @@ export class App implements OnInit, OnDestroy, AfterViewInit {
     message: string;
     provenance: string;
   }> = [
-    {
-      id: 1,
-      time: '22:00:01',
-      source: 'SYS',
-      level: 'INFO',
-      message: 'Q-SAT Mission Control Online. Optical Ground Station Bob (Trichy, 10.79°N, 78.70°E) active.',
-      provenance: '[SIMULATION]'
-    },
-    {
-      id: 2,
-      time: '22:00:03',
-      source: 'SAT',
-      level: 'INFO',
-      message: 'Alice (LEO 500 km) orbit propagated via Keplerian topocentric model.',
-      provenance: '[SIMULATION]'
-    },
-    {
-      id: 3,
-      time: '22:00:05',
-      source: 'QKD',
-      level: 'SUCCESS',
-      message: 'BB84 Quantum Key Distribution channel online. SPAD detector efficiency = 10%.',
-      provenance: '[SIMULATION]'
-    },
-    {
-      id: 4,
-      time: '22:00:08',
-      source: 'AI',
-      level: 'INFO',
-      message: 'Hierarchical Multi-Agent AI controller active. Real-time actuator tuning engaged.',
-      provenance: '[AI OUTPUT]'
-    }
-  ];
+      {
+        id: 1,
+        time: '22:00:01',
+        source: 'SYS',
+        level: 'INFO',
+        message: 'Q-SAT Mission Control Online. Tiruchirappalli reference ground station [10.7905° N, 78.7047° E] active.',
+        provenance: '[SIMULATION]'
+      },
+      {
+        id: 2,
+        time: '22:00:03',
+        source: 'SAT',
+        level: 'INFO',
+        message: 'Alice (LEO 500 km) orbit propagated via topocentric analytical reference pass model.',
+        provenance: '[PREDICTION]'
+      },
+      {
+        id: 3,
+        time: '22:00:05',
+        source: 'QKD',
+        level: 'SUCCESS',
+        message: 'BB84 Quantum Key Distribution channel online. Centralized receiver aperture = 1.0 m, Wavelength = 850 nm.',
+        provenance: '[SIMULATION]'
+      },
+      {
+        id: 4,
+        time: '22:00:08',
+        source: 'AI',
+        level: 'INFO',
+        message: 'Hierarchical Multi-Agent controller active. Domain arbitration and actuator bounds enforced.',
+        provenance: '[AI OUTPUT]'
+      }
+    ];
   public logFilter: 'ALL' | 'SEC' | 'AI' | 'QKD' | 'SAT' = 'ALL';
   private lastLogTimestamp = 0;
   private lastVisibleState: boolean | null = null;
@@ -289,13 +304,13 @@ export class App implements OnInit, OnDestroy, AfterViewInit {
       this.lastControllerMode = packet.control.mode;
     }
 
-    // Log anomaly / cyber attack detection
+    // Log anomaly assessment
     const isAnomaly = (packet.qkd?.qber_decomposition?.security_anomaly_component || 0) > 0.001;
     if (isAnomaly !== this.lastAnomalyState) {
       if (isAnomaly) {
-        this.addLog('SEC', 'DANGER', `CYBER ALERT: Security Agent detected anomalous QBER (+${((packet.qkd?.qber_decomposition?.security_anomaly_component || 0) * 100).toFixed(1)}%). Potential eavesdropping!`, '[AI OUTPUT]');
+        this.addLog('SEC', 'WARN', `MODELED ANOMALY ASSESSMENT: Elevated QBER anomaly component detected (+${((packet.qkd?.qber_decomposition?.security_anomaly_component || 0) * 100).toFixed(1)}%). Modeled channel disturbance assessment active.`, '[AI OUTPUT]');
       } else {
-        this.addLog('SEC', 'SUCCESS', `Channel cleared: Security Agent reports channel nominal.`, '[AI OUTPUT]');
+        this.addLog('SEC', 'SUCCESS', `Channel cleared: Security Agent reports channel error consistent with physical budget.`, '[AI OUTPUT]');
       }
       this.lastAnomalyState = isAnomaly;
     }
@@ -351,6 +366,140 @@ export class App implements OnInit, OnDestroy, AfterViewInit {
       next: () => console.log(`Scenario switched to ${scenario}`),
       error: (err) => console.error('Error switching scenario:', err)
     });
+  }
+
+  public get ppoStatusText(): string {
+    const ctrl = this.telemetry?.control;
+    if (!ctrl) return 'STANDBY';
+    if (ctrl.mode === 'PPO') {
+      if (ctrl.actual_controller === 'RULE_BASED') {
+        return 'FALLBACK (RULE-BASED)';
+      }
+      return ctrl.model_loaded ? 'PPO MODEL LOADED' : 'PPO INITIALIZING';
+    }
+    return ctrl.mode;
+  }
+
+  public get ppoStatusBadgeClass(): string {
+    const ctrl = this.telemetry?.control;
+    if (!ctrl || ctrl.mode !== 'PPO') return 'badge-cyan';
+    if (ctrl.actual_controller === 'RULE_BASED') return 'badge-amber';
+    return ctrl.model_loaded ? 'badge-green' : 'badge-amber';
+  }
+
+  public onEnvironmentModeChange(mode: 'simulation' | 'historical_replay' | 'mqtt'): void {
+    this.environmentMode = mode;
+    this.telemetryService.switchEnvironmentMode(mode).subscribe({
+      next: () => {
+        this.addLog('ENV', 'INFO', `Environment mode set to ${mode.toUpperCase()}`, '[MODE SWITCH]');
+        if (mode === 'historical_replay') {
+          this.loadHistoricalFiles();
+          this.refreshHistoricalStatus();
+        }
+      },
+      error: (err) => console.error('Error switching environment mode:', err)
+    });
+  }
+
+  public loadHistoricalFiles(): void {
+    this.telemetryService.getHistoricalFiles().subscribe({
+      next: (res) => {
+        const raw = Array.isArray(res) ? res : (res.files || res.details || []);
+        this.availableHistoricalFiles = raw.map((item: any) => typeof item === 'string' ? item : (item.filename || item.filepath));
+        if (this.availableHistoricalFiles.length > 0) {
+          const era5 = this.availableHistoricalFiles.find(f => f.includes('era5'));
+          if (era5) {
+            this.selectedHistoricalFile = era5;
+          } else if (!this.selectedHistoricalFile) {
+            this.selectedHistoricalFile = this.availableHistoricalFiles[0];
+          }
+        }
+      },
+      error: (err) => console.error('Error loading historical files:', err)
+    });
+  }
+
+  public applyHistoricalConfig(): void {
+    let filePath = this.selectedHistoricalFile;
+    if (!filePath.startsWith('simulation/historical_weather/') && !filePath.includes('/') && !filePath.includes('\\')) {
+      filePath = `simulation/historical_weather/${filePath}`;
+    }
+    this.telemetryService.configureHistoricalReplay({
+      csv_file: filePath,
+      start_datetime_iso: this.historicalStartDatetime,
+      interpolation_mode: this.historicalInterpolationMode,
+      assumed_turbulence: this.historicalAssumedTurbulence,
+      assumed_vibration_g: this.historicalAssumedVibration
+    }).subscribe({
+      next: (status) => {
+        this.historicalStatus = status;
+        this.addLog('ENV', 'SUCCESS', `Historical Replay configured: ${status.csv_file || status.file_name} (${status.interpolation_mode})`, '[HISTORICAL REPLAY]');
+      },
+      error: (err) => {
+        console.error('Error configuring historical replay:', err);
+        this.addLog('ENV', 'DANGER', `Historical Replay config error: ${err.message || 'Check CSV timestamps'}`, '[CONFIG ERROR]');
+      }
+    });
+  }
+
+  public refreshHistoricalStatus(): void {
+    this.telemetryService.getHistoricalStatus().subscribe({
+      next: (status) => {
+        this.historicalStatus = status;
+      },
+      error: (err) => console.error('Error fetching historical status:', err)
+    });
+  }
+
+  public exportTelemetryCsv(): void {
+    if (!this.currentHistory || this.currentHistory.length === 0) {
+      alert('No telemetry data in buffer to export.');
+      return;
+    }
+    const headers = ['timeLabel', 'timestamp', 'qberPct', 'skrKbps', 'totalLossDb', 'laserPowerMw', 'repetitionRateMhz', 'beamDivergenceUrad'];
+    const rows = this.currentHistory.map(h => [
+      h.timeLabel,
+      h.timestamp,
+      h.qberPct,
+      h.skrKbps,
+      h.totalLossDb,
+      h.laserPowerMw,
+      h.repetitionRateMhz,
+      h.beamDivergenceUrad
+    ].join(','));
+    const csvContent = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `qsat_telemetry_${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    this.addLog('SYS', 'SUCCESS', `Exported ${this.currentHistory.length} telemetry samples to CSV.`, '[EXPORT]');
+  }
+
+  public exportTelemetryJson(): void {
+    if (!this.currentHistory || this.currentHistory.length === 0) {
+      alert('No telemetry data in buffer to export.');
+      return;
+    }
+    const exportData = {
+      ground_station: "Tiruchirappalli reference ground station",
+      coordinates: { latitude: 10.7905, longitude: 78.7047, altitude_m: 88.0 },
+      export_timestamp: new Date().toISOString(),
+      active_telemetry: this.telemetry,
+      history_buffer: this.currentHistory
+    };
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `qsat_telemetry_${Date.now()}.json`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    this.addLog('SYS', 'SUCCESS', `Exported telemetry state snapshot to JSON.`, '[EXPORT]');
   }
 
   public toggleAnomaly(): void {

@@ -1,0 +1,119 @@
+{
+    "benchmark_name": "Historical Weather Multi-Controller Replay",
+    "timestamp_iso": "2026-11-04T03:39:42.776638+00:00",
+    "dataset_identity": {
+        "csv_source_file": "simulation/historical_weather/tiruchirappalli_20240301_20240331_era5.csv",
+        "dataset_name": "Tiruchirappalli Historical Weather (2024-03-01 to 2024-03-31, ERA5)",
+        "provenance": "REANALYSIS_ERA5",
+        "data_type": "ECMWF ERA5 Reanalysis (Explicitly requested via models=era5)",
+        "model_requested": "era5",
+        "is_synthetic": false,
+        "api_url": "https://archive-api.open-meteo.com/v1/archive?latitude=10.7905&longitude=78.7047&start_date=2024-03-01&end_date=2024-03-31&hourly=temperature_2m&hourly=relative_humidity_2m&hourly=cloud_cover&hourly=wind_speed_10m&hourly=shortwave_radiation_instant&hourly=surface_pressure&timezone=UTC&models=era5"
+    },
+    "time_alignment": {
+        "requested_start_utc": "2024-03-02T18:00:00Z",
+        "local_station_timezone": "Asia/Kolkata (IST = UTC + 05:30)",
+        "explanation": "Tiruchirappalli operates on Indian Standard Time (IST, UTC+05:30). Weather timestamps in ERA5 are archived in UTC. For example, 2024-03-02T18:00:00Z corresponds to 23:30 IST (11:30 PM local nighttime), representing ideal nocturnal QKD operating conditions with zero solar background irradiance."
+    },
+    "atmospheric_channel_assumptions": {
+        "turbulence": "CONFIGURED_ASSUMPTION (0.12 index; unmeasured in reanalysis models)",
+        "vibration": "CONFIGURED_ASSUMPTION (0.015 g acceleration; mechanical mount jitter unmeasured)",
+        "ambient_light": "MODELED_ESTIMATE (derived from solar zenith angle and shortwave irradiance; zero at local night)",
+        "cloud_extinction": "NONLINEAR_OPTICAL_MODEL (derived from meteorological cloud cover via cloud_factor = (cover/100)^1.25)"
+    },
+    "configuration": {
+        "duration_seconds": 300,
+        "timestep_seconds": 1.0,
+        "total_timesteps": 301,
+        "interpolation_mode": "LINEAR",
+        "satellite_pass_mode": "ANALYTICAL_REFERENCE_PASS",
+        "ground_station": {
+            "name": "Tiruchirappalli reference ground station",
+            "latitude": 10.7905,
+            "longitude": 78.7047,
+            "altitude_m": 80.0,
+            "min_elevation_deg": 10.0,
+            "receiver_aperture_m": 1.0,
+            "wavelength_nm": 850.0
+        },
+        "controllers_evaluated": [
+            "STATIC",
+            "RULE_BASED",
+            "PPO",
+            "MULTI_AGENT"
+        ]
+    },
+    "units": {
+        "total_secret_key": "kbits (1000 bits)",
+        "secret_key_rate": "kbps (kilobits per second)",
+        "qber": "percentage (%)",
+        "energy": "Joules (integrated electrical wall-plug power: P_elec * dt)",
+        "energy_proxy": "%\u00b7s (transmission power percentage integrated over time)"
+    },
+    "results": [
+        {
+            "controller": "STATIC",
+            "actual_controller": "STATIC",
+            "model_loaded": false,
+            "total_secret_key_kbits": 53.367,
+            "mean_skr_kbps": 0.177,
+            "peak_skr_kbps": 0.326,
+            "mean_qber_pct": 8.52,
+            "uptime_pct": 78.7,
+            "total_energy_joules": 50.17,
+            "energy_proxy_pct_s": 15050.0,
+            "efficiency_kbits_per_joule": 1.0638,
+            "action_changes": 0,
+            "power_std_pct": 0.0,
+            "decision_latency_ms": 0.005
+        },
+        {
+            "controller": "RULE_BASED",
+            "actual_controller": "RULE_BASED",
+            "model_loaded": false,
+            "total_secret_key_kbits": 0.005,
+            "mean_skr_kbps": 0.0,
+            "peak_skr_kbps": 0.005,
+            "mean_qber_pct": 16.07,
+            "uptime_pct": 0.3,
+            "total_energy_joules": 100.2,
+            "energy_proxy_pct_s": 30060.0,
+            "efficiency_kbits_per_joule": 0.0,
+            "action_changes": 3,
+            "power_std_pct": 1.82,
+            "decision_latency_ms": 0.041
+        },
+        {
+            "controller": "PPO",
+            "actual_controller": "PPO",
+            "model_loaded": true,
+            "total_secret_key_kbits": 0.0,
+            "mean_skr_kbps": 0.0,
+            "peak_skr_kbps": 0.0,
+            "mean_qber_pct": 42.83,
+            "uptime_pct": 0.0,
+            "total_energy_joules": 12.08,
+            "energy_proxy_pct_s": 3623.4,
+            "efficiency_kbits_per_joule": 0.0,
+            "action_changes": 20,
+            "power_std_pct": 12.12,
+            "decision_latency_ms": 0.483
+        },
+        {
+            "controller": "MULTI_AGENT",
+            "actual_controller": "MULTI_AGENT",
+            "model_loaded": false,
+            "total_secret_key_kbits": 179.194,
+            "mean_skr_kbps": 0.595,
+            "peak_skr_kbps": 0.986,
+            "mean_qber_pct": 4.38,
+            "uptime_pct": 92.4,
+            "total_energy_joules": 79.08,
+            "energy_proxy_pct_s": 23725.0,
+            "efficiency_kbits_per_joule": 2.2659,
+            "action_changes": 4,
+            "power_std_pct": 7.89,
+            "decision_latency_ms": 0.069
+        }
+    ]
+}

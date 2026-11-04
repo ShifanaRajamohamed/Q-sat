@@ -1,0 +1,30 @@
+{
+  "timestamp_utc": "2026-11-03T16:33:31.489978+00:00",
+  "ground_station": "Tiruchirappalli reference ground station",
+  "coordinates": {
+    "lat": 10.7905,
+    "lon": 78.7047,
+    "alt_m": 80.0
+  },
+  "historical_dataset": "simulation/historical_weather/tiruchirappalli_2024_03_synthetic_fixture.csv",
+  "replay_start_time_iso": "2024-03-16T18:00:00Z",
+  "pass_duration_s": 300.0,
+  "timestep_s": 1.0,
+  "controllers_evaluated": [
+    "STATIC",
+    "RULE_BASED",
+    "MULTI_AGENT",
+    "ABLATION_NO_WEATHER",
+    "ABLATION_NO_SECURITY",
+    "PPO"
+  ],
+  "provenance": "DETERMINISTIC_HISTORICAL_REPLAY",
+  "units": {
+    "secret_key": "kbits (1000 bits)",
+    "skr": "kbps (1000 bits/sec)",
+    "qber": "percentage (%)",
+    "energy": "Joules (integrated electrical wall-plug)",
+    "energy_proxy": "%\u00b7seconds",
+    "latency": "milliseconds"
+  }
+}

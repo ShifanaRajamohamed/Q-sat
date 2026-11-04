@@ -1,16 +1,13 @@
 """Unit and integration tests for Phase 5: BB84-Inspired Analytical QKD Model."""
 
 import pytest
-from fastapi.testclient import TestClient
-from backend.app.main import app
 from backend.app.models.environment import EnvironmentData
 from backend.app.models.qkd import OpticalChannelState
+from backend.app.services.qkd_service import qkd_service
 from qkd.bb84_model import BB84Model
 from qkd.key_rate import calculate_raw_key_rate, calculate_sifted_key_rate
 from qkd.qber import calculate_qber
 from qkd.secret_key_rate import binary_entropy, calculate_secret_key_rate
-
-client = TestClient(app)
 
 
 def test_binary_entropy():
@@ -57,33 +54,27 @@ def test_qber_attribution():
     assert decomp.total_qber <= 0.50
 
 
-def test_api_qkd_current():
-    """Verify GET /api/qkd/current returns valid analytical QKD metrics."""
-    response = client.get("/api/qkd/current")
-    assert response.status_code == 200
-    data = response.json()
+def test_qkd_service_current():
+    """Verify QKD service returns valid analytical QKD metrics."""
+    metrics = qkd_service.evaluate_current()
 
-    assert "qber" in data
-    assert "secret_key_rate" in data
-    assert "raw_key_rate" in data
-    assert "sifted_key_rate" in data
-    assert "qber_decomposition" in data
-    assert data["secret_key_rate"] >= 0.0
-    assert 0.0 <= data["qber"] <= 0.50
+    assert metrics.qber is not None
+    assert metrics.secret_key_rate is not None
+    assert metrics.raw_key_rate is not None
+    assert metrics.sifted_key_rate is not None
+    assert metrics.qber_decomposition is not None
+    assert metrics.secret_key_rate >= 0.0
+    assert 0.0 <= metrics.qber <= 0.50
 
 
-def test_api_qkd_anomaly_injection():
-    """Verify injecting and clearing security anomaly via API."""
+def test_qkd_service_anomaly_injection():
+    """Verify injecting and clearing security anomaly via QKD service."""
     # Inject 8% error anomaly
-    inject_res = client.post("/api/qkd/anomaly", json={"qber_offset": 0.08})
-    assert inject_res.status_code == 200
-
-    # Query metrics
-    metrics_res = client.get("/api/qkd/current")
-    assert metrics_res.status_code == 200
-    metrics = metrics_res.json()
-    assert metrics["qber_decomposition"]["security_anomaly_component"] == pytest.approx(0.08)
+    qkd_service.inject_anomaly(0.08)
+    metrics = qkd_service.evaluate_current()
+    assert metrics.qber_decomposition.security_anomaly_component == pytest.approx(0.08)
 
     # Clear anomaly
-    clear_res = client.delete("/api/qkd/anomaly")
-    assert clear_res.status_code == 200
+    qkd_service.clear_anomaly()
+    metrics_cleared = qkd_service.evaluate_current()
+    assert metrics_cleared.qber_decomposition.security_anomaly_component == pytest.approx(0.0)

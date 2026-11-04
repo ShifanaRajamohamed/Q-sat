@@ -1,0 +1,5 @@
+controller,actual_controller,model_loaded,total_secret_key_kbits,mean_skr_kbps,peak_skr_kbps,mean_qber_pct,uptime_pct,total_energy_joules,energy_proxy_pct_s,efficiency_kbits_per_joule,action_changes,power_std_pct,decision_latency_ms
+STATIC,STATIC,False,53.367,0.177,0.326,8.52,78.7,50.17,15050.0,1.0638,0,0.0,0.005
+RULE_BASED,RULE_BASED,False,0.005,0.0,0.005,16.07,0.3,100.2,30060.0,0.0,3,1.82,0.041
+PPO,PPO,True,0.0,0.0,0.0,42.83,0.0,12.08,3623.4,0.0,20,12.12,0.483
+MULTI_AGENT,MULTI_AGENT,False,179.194,0.595,0.986,4.38,92.4,79.08,23725.0,2.2659,4,7.89,0.069

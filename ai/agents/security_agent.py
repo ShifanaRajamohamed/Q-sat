@@ -1,4 +1,11 @@
-"""Security & Anomaly Agent: Distinguishes physical environmental channel degradation from potential security anomalies."""
+"""Security & Anomaly Agent: Evaluates channel error against modeled physical noise budget.
+
+Scientific and Operational Constraints:
+- Security outputs are modeled anomaly assessments based on error budget decomposition.
+- They are NOT confirmed physical eavesdropping detection (anomalies may arise from unmodeled
+  environmental disturbances, optical misalignment, or adversary perturbation).
+- Never claim confirmed interception without independent cryptographic verification.
+"""
 
 from typing import List
 import numpy as np
@@ -9,7 +16,7 @@ from backend.app.models.qkd import OpticalChannelState, QKDMetrics
 
 
 class SecurityAgent:
-    """Classifies root cause of QBER elevation: physical degradation vs potential eavesdropping anomaly."""
+    """Evaluates whether elevated QBER is consistent with modeled physical noise or represents an unexplained anomaly."""
 
     def __init__(self, history_len: int = 20):
         self.qber_history: List[float] = []
@@ -21,7 +28,7 @@ class SecurityAgent:
         channel: OpticalChannelState,
         qkd: QKDMetrics
     ) -> SecurityAgentDecision:
-        """Perform multi-factor attribution on observed QBER."""
+        """Perform multi-factor attribution on observed QBER against physical budget."""
         self.qber_history.append(qkd.qber)
         if len(self.qber_history) > self.history_len:
             self.qber_history.pop(0)
@@ -54,25 +61,25 @@ class SecurityAgent:
 
         # Classification Logic
         if unexplained_error > 0.035 or decomp.security_anomaly_component > 0.02:
-            # Unexplained excess error -> potential eavesdropping disturbance (intercept-resend) or hardware fault
+            # Unexplained excess error -> modeled anomaly assessment
             classification = "ANOMALY"
             prob = min(0.98, 0.50 + unexplained_error * 8.0)
             explanation = (
-                f"ALERT: Observed QBER ({qkd.qber*100:.2f}%) exceeds physically explained noise "
-                f"({explained_physical_error*100:.2f}%) by {unexplained_error*100:.2f}%. "
-                f"Potential intercept-resend eavesdropping or unauthorized optical perturbation."
+                f"MODELED ANOMALY ASSESSMENT: Observed QBER ({qkd.qber*100:.2f}%) exceeds physical error "
+                f"budget ({explained_physical_error*100:.2f}%) by {unexplained_error*100:.2f}%. "
+                f"Assessed as potential optical channel disturbance or unauthorized perturbation (modeled assessment, not confirmed eavesdropping)."
             )
-            div_adj = 1.30  # Expand divergence to detect spatial beam clipping
+            div_adj = 1.30  # Expand divergence for spatial validation
             conf = 0.90
 
         elif qkd.qber > 0.055:
-            # High error, but fully accounted for by physical phenomena
+            # High error, but accounted for by physical phenomena
             classification = "DEGRADED"
             prob = min(0.20, unexplained_error * 2.0)
             explanation = (
-                f"Elevated QBER ({qkd.qber*100:.2f}%) is accounted for by physical factors. "
+                f"Elevated QBER ({qkd.qber*100:.2f}%) is accounted for by physical error budget. "
                 f"Dominant contributor: {primary_driver} ({components[primary_driver]*100:.2f}% error). "
-                f"No evidence of cryptographic intercept."
+                f"No unexplained statistical anomaly detected."
             )
             div_adj = 1.15 if primary_driver == "Platform Mount Vibration" else 1.0
             conf = 0.88
@@ -81,7 +88,7 @@ class SecurityAgent:
             # Normal baseline conditions
             classification = "NORMAL"
             prob = 0.02
-            explanation = f"Channel nominal. QBER is within normal baseline limits ({qkd.qber*100:.2f}%)."
+            explanation = f"Channel nominal. QBER is within normal physical baseline budget ({qkd.qber*100:.2f}%)."
             div_adj = 1.0
             conf = 0.95
 

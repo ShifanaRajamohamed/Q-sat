@@ -1,7 +1,8 @@
 """Asymptotic Secret Key Rate (SKR) calculations based on BB84 information-theoretic security."""
 
 import math
-from typing import Tuple
+from typing import Optional, Tuple
+from backend.app.config import settings
 
 
 def binary_entropy(p: float) -> float:
@@ -14,8 +15,8 @@ def binary_entropy(p: float) -> float:
 def calculate_secret_key_rate(
     sifted_key_rate: float,
     qber: float,
-    error_correction_efficiency: float = 1.16,
-    qber_threshold: float = 0.110
+    error_correction_efficiency: Optional[float] = None,
+    qber_threshold: Optional[float] = None
 ) -> Tuple[float, float, bool]:
     """Calculate asymptotic Secret Key Rate (SKR) in bits per second (bps).
     
@@ -28,12 +29,15 @@ def calculate_secret_key_rate(
         secret_key_fraction (bits per sifted photon)
         is_secure (bool)
     """
-    if sifted_key_rate <= 0.0 or qber >= qber_threshold or qber >= 0.50:
+    f_e = error_correction_efficiency if error_correction_efficiency is not None else settings.ERROR_CORRECTION_EFFICIENCY
+    threshold = qber_threshold if qber_threshold is not None else settings.QBER_SECURITY_THRESHOLD
+
+    if sifted_key_rate <= 0.0 or qber >= threshold or qber >= 0.50:
         return 0.0, 0.0, False
 
     h2_e = binary_entropy(qber)
-    leakage_ec = error_correction_efficiency * h2_e  # Information leaked during error correction
-    leakage_pa = h2_e                                # Information removed during privacy amplification
+    leakage_ec = f_e * h2_e  # Information leaked during error correction
+    leakage_pa = h2_e        # Information removed during privacy amplification
 
     secret_fraction = 1.0 - leakage_ec - leakage_pa
 

@@ -1,0 +1,82 @@
+{
+    "dataset_name": "Tiruchirappalli Historical Weather (Open-Meteo Best Match, 2024-03-01 to 2024-03-31)",
+    "location_name": "Tiruchirappalli reference ground station",
+    "data_type": "Open-Meteo Best Match Reanalysis Blend (Default selection, models parameter not specified)",
+    "requested_coordinates": {
+        "latitude": 10.7905,
+        "longitude": 78.7047,
+        "altitude_m": 80.0
+    },
+    "returned_grid_coordinates": {
+        "latitude": 10.790861,
+        "longitude": 78.700264,
+        "elevation_m": 80.0
+    },
+    "timezone": "GMT",
+    "utc_offset_seconds": 0,
+    "api_hourly_units": {
+        "time": "iso8601",
+        "temperature_2m": "\u00b0C",
+        "relative_humidity_2m": "%",
+        "cloud_cover": "%",
+        "wind_speed_10m": "km/h",
+        "shortwave_radiation_instant": "W/m\u00b2",
+        "surface_pressure": "hPa"
+    },
+    "latitude": 10.7905,
+    "longitude": 78.7047,
+    "altitude_m": 80.0,
+    "start_time_iso": "2024-03-01T00:00:00Z",
+    "end_time_iso": "2024-03-31T23:00:00Z",
+    "total_records": 744,
+    "temporal_resolution": "1 hour",
+    "provenance": "REANALYSIS_BEST_MATCH",
+    "is_synthetic": false,
+    "api_url": "https://archive-api.open-meteo.com/v1/archive?latitude=10.7905&longitude=78.7047&start_date=2024-03-01&end_date=2024-03-31&hourly=temperature_2m&hourly=relative_humidity_2m&hourly=cloud_cover&hourly=wind_speed_10m&hourly=shortwave_radiation_instant&hourly=surface_pressure&timezone=UTC",
+    "retrieval_timestamp_iso": "2026-11-03T18:33:22.428600+00:00",
+    "license": "CC BY 4.0 / Open-Meteo Terms",
+    "fields": {
+        "timestamp": {
+            "unit": "ISO 8601 UTC string",
+            "provenance": "API_TIMESTAMPS"
+        },
+        "temperature_c": {
+            "unit": "deg C",
+            "provenance": "REANALYSIS_ERA5"
+        },
+        "relative_humidity_pct": {
+            "unit": "%",
+            "provenance": "REANALYSIS_ERA5"
+        },
+        "cloud_cover_pct": {
+            "unit": "%",
+            "provenance": "REANALYSIS_ERA5"
+        },
+        "wind_speed_m_s": {
+            "unit": "m/s",
+            "provenance": "REANALYSIS_ERA5"
+        },
+        "shortwave_radiation_w_m2": {
+            "unit": "W/m^2",
+            "provenance": "REANALYSIS_ERA5"
+        },
+        "surface_pressure_hpa": {
+            "unit": "hPa",
+            "provenance": "REANALYSIS_ERA5"
+        }
+    },
+    "missing_optical_channel_inputs": {
+        "turbulence": {
+            "treatment": "CONFIGURED_ASSUMPTION",
+            "default": 0.12
+        },
+        "vibration": {
+            "treatment": "CONFIGURED_ASSUMPTION",
+            "default": 0.015
+        },
+        "ambient_light": {
+            "treatment": "SOLAR_GEOMETRY_AND_RADIATION_MODELED",
+            "default_conversion": "shortwave_w_m2 * 115 lux/(W/m2)"
+        }
+    }
+}

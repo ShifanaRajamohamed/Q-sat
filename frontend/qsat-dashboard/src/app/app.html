@@ -11,7 +11,7 @@
               {{ qkdStatusText }}
             </span>
           </h1>
-          <div class="subtitle">Alice (LEO 500km) to Bob (OGS Trichy) &bull; BB84 Quantum Channel</div>
+          <div class="subtitle">Alice (LEO 500km) to Tiruchirappalli reference ground station [10.7905° N, 78.7047° E] &bull; BB84 Quantum Channel</div>
         </div>
       </div>
 
@@ -41,6 +41,14 @@
           Results
         </button>
 
+        <button class="btn btn-sm btn-cyan" (click)="exportTelemetryCsv()" title="Export buffered telemetry history as CSV">
+          Export CSV
+        </button>
+
+        <button class="btn btn-sm btn-cyan" (click)="exportTelemetryJson()" title="Export buffered telemetry history as JSON">
+          Export JSON
+        </button>
+
         <!-- Dynamic Dark/Light Theme Mode Switcher -->
         <button class="btn btn-theme-toggle" (click)="toggleTheme()" [title]="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'" id="theme-toggle-btn">
           <span class="theme-icon">{{ isDarkMode ? '☀️' : '🌙' }}</span>
@@ -51,9 +59,25 @@
 
     <!-- Secondary Command Strip: Mission Configuration & Actuation -->
     <div class="nav-command-strip">
-      <div class="command-group-left">
-        <!-- Scenario Selector -->
-        <div class="control-group">
+      <div class="command-group-left" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+        <!-- Environment Mode Toggle -->
+        <div class="control-group-inline">
+          <span class="control-label">Env Mode:</span>
+          <div class="btn-toggle-group">
+            <button class="btn-toggle" [class.active]="environmentMode === 'simulation'" (click)="onEnvironmentModeChange('simulation')">
+              SCENARIO
+            </button>
+            <button class="btn-toggle" [class.active]="environmentMode === 'historical_replay'" (click)="onEnvironmentModeChange('historical_replay')">
+              HISTORICAL REPLAY
+            </button>
+            <button class="btn-toggle" [class.active]="environmentMode === 'mqtt'" (click)="onEnvironmentModeChange('mqtt')">
+              MQTT HARDWARE
+            </button>
+          </div>
+        </div>
+
+        <!-- Scenario Selector (when in Scenario mode) -->
+        <div class="control-group" *ngIf="environmentMode === 'simulation'">
           <span class="control-label">Weather:</span>
           <select class="custom-select" [ngModel]="selectedScenario" (ngModelChange)="onScenarioChange($event)">
             <option value="CLEAR_SKY">Clear Sky (Optimal 32 dB)</option>
@@ -63,6 +87,27 @@
             <option value="VIBRATION">Mount Vibration</option>
             <option value="COMBINED_DEGRADATION">Combined Storm</option>
           </select>
+        </div>
+
+        <!-- Historical Replay Controls (when in historical_replay mode) -->
+        <div class="control-group-inline" *ngIf="environmentMode === 'historical_replay'" style="gap: 6px;">
+          <span class="control-label">CSV:</span>
+          <select class="custom-select" [(ngModel)]="selectedHistoricalFile" style="max-width: 170px;">
+            <option *ngFor="let f of availableHistoricalFiles" [value]="f">{{ f }}</option>
+          </select>
+
+          <span class="control-label">Start UTC:</span>
+          <input type="text" class="custom-select" [(ngModel)]="historicalStartDatetime" style="width: 145px; font-family: monospace; font-size: 11px;" />
+
+          <span class="control-label">Interp:</span>
+          <select class="custom-select" [(ngModel)]="historicalInterpolationMode" style="width: 85px;">
+            <option value="LINEAR">LINEAR</option>
+            <option value="HOLD">HOLD</option>
+          </select>
+
+          <button class="btn btn-sm btn-green" (click)="applyHistoricalConfig()" style="padding: 4px 8px;">
+            Apply Replay
+          </button>
         </div>
 
         <!-- Controller Mode Switcher -->
@@ -82,6 +127,10 @@
               PPO NEURAL
             </button>
           </div>
+          <!-- PPO Model Loading & Fallback Status Badge -->
+          <span class="badge" [ngClass]="ppoStatusBadgeClass" *ngIf="telemetry?.control?.mode === 'PPO'" style="margin-left: 6px; font-size: 9.5px;">
+            {{ ppoStatusText }}
+          </span>
         </div>
       </div>
 
@@ -115,6 +164,7 @@
             Satellite Ground Track
           </div>
           <div style="display: flex; gap: 8px; align-items: center;">
+            <span class="badge badge-purple" *ngIf="telemetry?.satellite?.is_orbital_prediction">[ORBITAL PREDICTION]</span>
             <span class="badge badge-green" *ngIf="telemetry?.satellite?.is_visible">IN OPTICAL SIGHT</span>
             <span class="badge badge-amber" *ngIf="!telemetry?.satellite?.is_visible">SUB-HORIZON</span>
             <span class="badge badge-cyan">ALT: 500 km</span>
@@ -125,7 +175,7 @@
             <canvas #worldMapCanvas width="540" height="260" class="world-map-canvas"></canvas>
             <div class="map-overlay-stats">
               <div><strong>Sat:</strong> {{ telemetry?.satellite?.latitude | number:'1.2-2' }}°N, {{ telemetry?.satellite?.longitude | number:'1.2-2' }}°E</div>
-              <div><strong>OGS Bob:</strong> 10.79°N, 78.70°E (Trichy)</div>
+              <div><strong>Ground Station:</strong> Tiruchirappalli reference ground station [10.7905° N, 78.7047° E]</div>
             </div>
           </div>
         </div>
@@ -218,6 +268,65 @@
                 {{ (telemetry?.channel?.total_loss_db || 0) | number:'1.1-1' }}<span class="metric-unit">dB</span>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Atmospheric & Ground Station Environmental State -->
+      <section class="glass-panel" style="margin-top: 14px;">
+        <div class="panel-header">
+          <div class="panel-title">
+            Ground Station Environment (Tiruchirappalli)
+          </div>
+          <div style="display: flex; gap: 6px; align-items: center;">
+            <span class="badge badge-purple" *ngIf="telemetry?.environment?.data_source === 'HISTORICAL_REPLAY'">HISTORICAL REPLAY</span>
+            <span class="badge badge-cyan" *ngIf="telemetry?.environment?.data_source === 'SIMULATION'">SCENARIO SIMULATION</span>
+            <span class="badge badge-green" *ngIf="telemetry?.environment?.data_source === 'MQTT_HARDWARE'">LIVE MQTT</span>
+            <span class="badge badge-amber" *ngIf="telemetry?.environment?.is_interpolated">INTERPOLATED ({{ telemetry?.environment?.interpolation_method }})</span>
+          </div>
+        </div>
+        <div style="padding: 2px 16px 6px 16px; font-size: 10px; color: #c084fc; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; align-items: center;" *ngIf="telemetry?.environment?.data_source === 'HISTORICAL_REPLAY'">
+          <span>Dataset: <strong style="color: #38bdf8; font-family: monospace;">{{ historicalStatus?.csv_file || selectedHistoricalFile }}</strong></span>
+          <span>Provenance: <span class="badge badge-purple" style="font-size: 8.5px; padding: 2px 5px;">{{ historicalStatus?.dataset_source || 'ECMWF ERA5 Reanalysis (models=era5)' }}</span></span>
+        </div>
+        <div class="panel-body link-budget-body">
+          <div class="budget-grid">
+            <div class="metric-box">
+              <div class="metric-label">Temperature</div>
+              <div class="metric-val" style="color: #38bdf8;">{{ (telemetry?.environment?.temperature || 0) | number:'1.1-1' }}<span class="metric-unit">°C</span></div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-label">Relative Humidity</div>
+              <div class="metric-val" style="color: #00f0ff;">{{ (telemetry?.environment?.humidity || 0) | number:'1.1-1' }}<span class="metric-unit">%</span></div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-label">Cloud Cover (Meteo)</div>
+              <div class="metric-val" style="color: #a855f7;">
+                {{ ((telemetry?.environment?.cloud_cover_pct !== undefined ? telemetry!.environment!.cloud_cover_pct : (telemetry?.environment?.cloud_factor || 0) * 100) || 0) | number:'1.0-0' }}<span class="metric-unit">%</span>
+              </div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-label">Optical Cloud Factor</div>
+              <div class="metric-val" style="color: #f59e0b;" title="Separated optical extinction parameter">
+                {{ (telemetry?.environment?.cloud_factor || 0) | number:'1.2-2' }}<span class="metric-unit">/ 1.0</span>
+              </div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-label">Turbulence <span class="badge badge-amber" style="font-size: 8px;">ASSUMED</span></div>
+              <div class="metric-val" style="color: #64748b;" title="Configured research assumption (not physically measured)">
+                {{ (telemetry?.environment?.turbulence || 0) | number:'1.2-2' }}
+              </div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-label">Vibration <span class="badge badge-amber" style="font-size: 8px;">ASSUMED</span></div>
+              <div class="metric-val" style="color: #64748b;" title="Configured research assumption (not physically measured)">
+                {{ (telemetry?.environment?.vibration || 0) | number:'1.3-3' }}<span class="metric-unit">g</span>
+              </div>
+            </div>
+          </div>
+          <div style="font-size: 9.5px; color: var(--text-muted); margin-top: 8px; display: flex; justify-content: space-between;">
+            <span>Replay Time: {{ telemetry?.environment?.datetime_iso || 'Simulation Dynamic Step' }}</span>
+            <span>Receiver Aperture: 1.0 m &bull; Wavelength: 850 nm</span>
           </div>
         </div>
       </section>
@@ -452,7 +561,7 @@
     </div>
 
     <div class="mono" style="font-size: 10px; color: var(--text-muted);">
-      OGS BOB TIRUCHIRAPPALLI [10.7905° N, 78.7047° E] &bull; DIGITAL TWIN SIMULATION
+      Tiruchirappalli reference ground station [10.7905° N, 78.7047° E] &bull; DIGITAL TWIN SIMULATION
     </div>
   </footer>
 

@@ -2,15 +2,16 @@
 
 from typing import Literal, Optional
 from pydantic import BaseModel, Field
+from backend.app.config import settings
 
 
 class GroundStationConfig(BaseModel):
     """Ground station geographic coordinates and tracking thresholds."""
-    name: str = Field("Trichy Optical Ground Station", description="Ground Station identifier")
-    latitude: float = Field(10.7905, description="Latitude in degrees North [-90, 90]")
-    longitude: float = Field(78.7047, description="Longitude in degrees East [-180, 180]")
-    altitude_m: float = Field(80.0, ge=0.0, description="Altitude above mean sea level in meters")
-    min_elevation_deg: float = Field(10.0, ge=0.0, le=45.0, description="Minimum elevation cutoff angle (degrees)")
+    name: str = Field(default_factory=lambda: settings.GROUND_STATION_NAME, description="Ground Station identifier")
+    latitude: float = Field(default_factory=lambda: settings.GROUND_STATION_LAT, description="Latitude in degrees North [-90, 90]")
+    longitude: float = Field(default_factory=lambda: settings.GROUND_STATION_LON, description="Longitude in degrees East [-180, 180]")
+    altitude_m: float = Field(default_factory=lambda: settings.GROUND_STATION_ALT, ge=0.0, description="Altitude above mean sea level in meters")
+    min_elevation_deg: float = Field(default_factory=lambda: settings.MIN_ELEVATION, ge=0.0, le=45.0, description="Minimum elevation cutoff angle (degrees)")
 
 
 class SatelliteState(BaseModel):
@@ -32,3 +33,12 @@ class SatelliteState(BaseModel):
     pass_id: int = Field(1, description="Sequential pass identifier")
     time_to_los_s: Optional[float] = Field(None, description="Estimated seconds until Loss of Signal (below threshold)")
     time_to_aos_s: Optional[float] = Field(None, description="Estimated seconds until Acquisition of Signal (above threshold)")
+    
+    # Provenance and tracking metadata
+    is_orbital_prediction: bool = Field(False, description="True indicates calculated prediction from orbital propagator, NOT direct satellite telemetry")
+    orbital_source: str = Field("ANALYTICAL_REFERENCE", description="Source of orbital propagation (ANALYTICAL_REFERENCE, SGP4_TLE_PREDICTION)")
+    orbital_epoch: Optional[str] = Field(None, description="Orbital element epoch in ISO 8601 UTC")
+    retrieval_timestamp: Optional[str] = Field(None, description="Timestamp when orbital elements were retrieved")
+    epoch_age_days: Optional[float] = Field(None, description="Age of orbital elements in days relative to current propagation time")
+    epoch_warning: Optional[str] = Field(None, description="Warning if propagation is far from orbital epoch")
+    assumed_payload_parameters: Optional[dict] = Field(None, description="Configured optical payload assumptions (not measured telemetry)")

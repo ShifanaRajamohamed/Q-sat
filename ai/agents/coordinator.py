@@ -1,5 +1,15 @@
-"""Coordinator Agent: Hierarchical decision maker that resolves agent conflicts and executes final control actions."""
+"""Coordinator Agent: Hierarchical rule-arbitrated multi-agent controller.
 
+Note on Architecture:
+This system uses a hierarchical domain-expert heuristic and rule-arbitration architecture.
+It is explicitly NOT Multi-Agent Reinforcement Learning (MARL). Domain recommendations
+from Weather, Comm, and Security agents are synthesized with rate-of-change constraints.
+
+Supports selective ablation of individual agents (Weather, Comm, Security) to enable
+fair ablation studies against baseline arbitration.
+"""
+
+from typing import List, Optional
 import numpy as np
 
 from backend.app.config import settings
@@ -21,14 +31,23 @@ from ai.agents.weather_agent import WeatherAgent
 class CoordinatorAgent:
     """Arbitrates and synthesizes domain recommendations from Weather, Comm, and Security agents."""
 
-    def __init__(self, max_rate_of_change: float = 0.20):
-        self.weather_agent = WeatherAgent()
-        self.comm_agent = CommunicationAgent()
-        self.security_agent = SecurityAgent()
-
+    def __init__(
+        self,
+        enable_weather: bool = True,
+        enable_comm: bool = True,
+        enable_security: bool = True,
+        max_rate_of_change: float = 0.20
+    ):
+        self.enable_weather = enable_weather
+        self.enable_comm = enable_comm
+        self.enable_security = enable_security
         self.max_rate_of_change = max_rate_of_change
 
-        # Current state
+        self.weather_agent = WeatherAgent() if enable_weather else None
+        self.comm_agent = CommunicationAgent() if enable_comm else None
+        self.security_agent = SecurityAgent() if enable_security else None
+
+        # Current actuator state
         self.power_pct: float = 50.0
         self.photon_rate_norm: float = 0.70
         self.beam_divergence_norm: float = 0.25
@@ -41,49 +60,81 @@ class CoordinatorAgent:
         qkd: QKDMetrics
     ) -> CoordinatorDecision:
         """Run hierarchical decision flow: Weather -> Comm -> Security -> Arbitration."""
-        # 1. Individual domain assessments
-        weather_dec = self.weather_agent.analyze(environment)
-        comm_dec = self.comm_agent.analyze(satellite, channel, qkd)
-        security_dec = self.security_agent.analyze(environment, channel, qkd)
+        # 1. Individual domain assessments (with fallback defaults if ablated)
+        weather_dec = (
+            self.weather_agent.analyze(environment)
+            if self.enable_weather and self.weather_agent
+            else WeatherAgentDecision(
+                severity="LOW",
+                cloud_impact=0.0,
+                turbulence_impact=0.0,
+                ambient_noise_level="NEGLIGIBLE",
+                recommendation="Weather agent ablated/disabled; using baseline assumptions.",
+                confidence=1.0
+            )
+        )
 
-        # 2. Conflict Detection & Arbitration
+        comm_dec = (
+            self.comm_agent.analyze(satellite, channel, qkd)
+            if self.enable_comm and self.comm_agent
+            else CommunicationAgentDecision(
+                link_viability="OPTIMAL",
+                link_margin_db=5.0,
+                target_power_pct=50.0,
+                target_photon_rate_norm=0.70,
+                recommendation="Communication agent ablated/disabled; using fixed static target.",
+                confidence=1.0
+            )
+        )
+
+        security_dec = (
+            self.security_agent.analyze(environment, channel, qkd)
+            if self.enable_security and self.security_agent
+            else SecurityAgentDecision(
+                classification="NORMAL",
+                anomaly_probability=0.0,
+                primary_error_driver="Ablated Baseline",
+                root_cause_explanation="Security agent ablated/disabled; no anomaly monitoring.",
+                recommended_divergence_adj=1.0,
+                confidence=1.0
+            )
+        )
+
+        # 2. Conflict Detection & Arbitration Logic
         conflict = False
-        notes = []
+        notes: List[str] = []
 
         if not satellite.is_visible or satellite.elevation_deg < settings.MIN_ELEVATION:
             target_power = settings.MIN_TRANSMISSION_POWER
             target_rate = settings.MIN_PHOTON_RATE
             target_div = 0.30
-            notes.append("Link unavailable; setting standby power")
+            notes.append("Link unavailable (satellite below horizon); setting transmitter to standby")
         else:
             target_power = comm_dec.target_power_pct
             target_rate = comm_dec.target_photon_rate_norm
             target_div = 0.20
 
-            # Rule Conflict A: Comm wants high power/rate, but Weather reports Severe conditions
-            if weather_dec.severity in ["HIGH", "SEVERE"] and comm_dec.target_power_pct > 80.0:
+            # Rule Conflict A: Comm wants high power/rate, but Weather reports severe attenuation
+            if self.enable_weather and weather_dec.severity in ["HIGH", "SEVERE"] and comm_dec.target_power_pct > 80.0:
                 conflict = True
-                # Compromise: moderate power to avoid burning thermal dissipation during severe attenuation
                 target_power = min(85.0, comm_dec.target_power_pct * 0.90)
                 target_rate = min(0.75, target_rate * 0.85)
-                notes.append("Arbitrated Comm vs Weather: Moderated transmission aggressiveness due to severe atmospheric extinction.")
+                notes.append("Arbitration (Comm vs Weather): Moderated power and rate to prevent thermal dissipation during severe attenuation")
 
-            # Rule Conflict B: Security flags Anomaly vs Comm wants maximum throughput
-            if security_dec.classification == "ANOMALY":
+            # Rule Conflict B: Security flags Modeled Anomaly vs Comm wants maximum throughput
+            if self.enable_security and security_dec.classification == "ANOMALY":
                 conflict = True
-                # Security overrides: apply conservative rate, increase divergence
                 target_rate = min(0.50, target_rate * 0.60)
                 target_div = min(1.0, target_div * security_dec.recommended_divergence_adj)
-                notes.append("Security Alert: Anomaly detected! Scaled down photon rate and broadened beam divergence for spatial validation.")
+                notes.append("Arbitration (Security Override): Modeled anomaly detected; throttled photon rate and broadened divergence for spatial validation")
 
-            # Rule Conflict C: Platform Mount Vibration
+            # Platform Mount Vibration Compensation
             if environment.vibration > 0.40:
                 target_div = min(1.0, max(target_div, 0.25 + 0.45 * environment.vibration))
-                notes.append("Compensated platform mount vibration via expanded beam spot.")
+                notes.append(f"Compensated platform mount vibration ({environment.vibration:.2f}g) via expanded beam spot")
 
-            # Default nominal
             if not notes:
-                notes.append("All agent recommendations aligned; nominal optimization active.")
+                notes.append("All active agent recommendations aligned; nominal optimization active")
 
         resolution_text = "; ".join(notes)
 
